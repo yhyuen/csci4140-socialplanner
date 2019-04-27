@@ -22,49 +22,42 @@
         <div class="calendar-container">
             <div class="calendar-header">
                 <h1>
-                    {{monthInfo[date.month].name}}
-                    <span>{{date.day}}</span>
-                    <button>▾</button>
+                    <select v-model="focusMonth" @change="generatedDays(focusMonth)">
+                        <option v-for="{name, shorthand, days, index} in monthInfo"
+                            :value="new Date(focusMonth.getFullYear(),index)"
+                            v-bind:selected="index==focusDay.getMonth()" :x="index==focusDay.getMonth()">{{name}}
+                        </option>
+                    </select>
                 </h1>
-                <p>{{date.year}}</p>
+                <p class="h3"><span @click="lastYear()">←</span>{{focusMonth.getFullYear()}}<span
+                        @click="nextYear()">→</span></p>
             </div>
             <div class="calendar">
                 <span class="day-name" v-for="weekday in weekdayInfo">{{weekday.shorthand}}</span>
-                <div class="day day--disabled">30</div>
-                <div class="day day--disabled">31</div>
-                <div class="day">1</div>
-                <div class="day">2</div>
-                <div class="day">3</div>
-                <div class="day">4</div>
-                <div class="day">5</div>
-                <div class="day">6</div>
-                <div class="day">7</div>
-                <div class="day">8</div>
-                <div class="day">9</div>
-                <div class="day">10</div>
-                <div class="day">11</div>
-                <div class="day">12</div>
-                <div class="day">13</div>
-                <div class="day">14</div>
-                <div class="day">15</div>
-                <div class="day">16</div>
-                <div class="day">17</div>
-                <div class="day">18</div>
-                <div class="day">19</div>
-                <div class="day">20</div>
-                <div class="day">21</div>
-                <div class="day">22</div>
-                <div class="day">23</div>
-                <div class="day">24</div>
-                <div class="day">25</div>
-                <div class="day">26</div>
-                <div class="day">27</div>
-                <div class="day">28</div>
-                <div class="day">29</div>
-                <div class="day">30</div>
-                <div class="day">31</div>
-                <div class="day day--disabled">1</div>
-                <div class="day day--disabled">2</div>
+                <div class="day" v-for="calendarDay in calendarDays" @click="clickOnDay(calendarDay)">
+                    {{calendarDay.getDate()}}
+                    <div class="popup_calendar light" data-container="body" v-if="calendarDay == focusDay" :style="getPopUpStyle(focusDay)">
+                        <div class="calendar_header">
+                            <h1 class="header_title">{{monthInfo[focusDay.getMonth()].name}} {{focusDay.getDate()}}, {{focusDay.getFullYear()}}</h1>
+                        </div>
+                        <div class="calendar_events">
+                            <p class="ce_title">Upcoming Events</p>
+                            <div class="event_item">
+                                <div class="ei_Dot dot_active"></div>
+                                <div class="ei_Title">10:30 am</div>
+                                <div class="ei_Copy">Monday briefing with the team</div>
+                            </div>
+                            <div class="event_item">
+                                <div class="ei_Dot"></div>
+                                <div class="ei_Title">12:00 pm</div>
+                                <div class="ei_Copy">Lunch for with the besties</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
                 <section class="task task--warning">Projects</section>
                 <section class="task task--danger">Design Sprint</section>
                 <section class="task task--primary">Product Checkup 1
@@ -81,70 +74,85 @@
 </body>
 
 <script>
+    var calVue;
     window.addEventListener('load', function () {
         var today = new Date();
-        var weekday = today.getDay() - 1;
-        var day = today.getDate();
-        var month = today.getMonth();
-        var year = today.getFullYear();
-        var leap = ((year % 4 == 0) && (year % 100 != 0)) || (year % 400 == 0);
-        var date = {
-            year: year,
-            leap: leap,
-            month: month,
-            day: day,
-            weekday: weekday,
-        }
-        console.log(date);
-        var monthInfo = [
-            { name: "January", shorthand: "Jan", days: 31 },
-            { name: "February", shorthand: "Feb", days: leap ? 29 : 28 },
-            { name: "March", shorthand: "Mar", days: 31 },
-            { name: "April", shorthand: "Apr", days: 30 },
-            { name: "May", shorthand: "May", days: 31 },
-            { name: "June", shorthand: "Jun", days: 30 },
-            { name: "July", shorthand: "Jul", days: 31 },
-            { name: "August", shorthand: "Aug", days: 31 },
-            { name: "September", shorthand: "Sep", days: 30 },
-            { name: "October", shorthand: "Oct", days: 31 },
-            { name: "November", shorthand: "Nov", days: 30 },
-            { name: "December", shorthand: "Dec", days: 31 }];
-        var weekdayInfo = [
-            { name: "Monday", shorthand: "Mon" },
-            { name: "Tuesday", shorthand: "Tue" },
-            { name: "Wednesday", shorthand: "Wed" },
-            { name: "Thursday", shorthand: "Thu" },
-            { name: "Friday", shorthand: "Fri" },
-            { name: "Saturday", shorthand: "Sat" },
-            { name: "Sunday", shorthand: "Sun" }];
-        var firstWeekday = (weekday - ((day - 1) % 7) + 7) % 7;
-        var lastWeekday = (monthInfo[date.month].days - date.day + weekday) % 7;
-        var lastmonth = {
-            month: (month - 1 + 12) % 12,
-            year: month == 1 ? year - 1 : year};
-        var nextmonth = {
-            month: (month + 1) % 12,
-            year: month == 12 ? year + 1 : year};
-        var days = [];
-        for (var i = 0; i < firstWeekday; i++){
-            var newDay = months[lastmonth.month].days - firstWeekday + 1 + i;
-            var newMonth = lastmonth.month;
-            var newYear = lastmonth.year;
-            days.push({year: newYear, month: newMonth, day: newDay});
-        }
-        for (var i = 1; i <= monthInfo[date.month].days; i++){
-            days.push({year: date.year, month: date.month, day: i});
-        }
-        for (var i = 1; (days.length % 7 == 0) != 0; i++){
-            days.push({year: nextmonth.year, month: nextmonth.month, day: i});
-        }
-        var calVue = new Vue({
+        calVue = new Vue({
             el: '#calendarbox',
             data: {
-                date: date,
-                days: days,
-                monthInfo: monthInfo,
-                weekdayInfo: weekdayInfo
+                today: today,
+                focusDay: today,
+                focusMonth: null,
+                calendarDays: null,
+                monthInfo: [
+                    { name: "January", shorthand: "Jan", days: 31, index: 0 },
+                    { name: "February", shorthand: "Feb", days: 28, index: 1 },
+                    { name: "March", shorthand: "Mar", days: 31, index: 2 },
+                    { name: "April", shorthand: "Apr", days: 30, index: 3 },
+                    { name: "May", shorthand: "May", days: 31, index: 4 },
+                    { name: "June", shorthand: "Jun", days: 30, index: 5 },
+                    { name: "July", shorthand: "Jul", days: 31, index: 6 },
+                    { name: "August", shorthand: "Aug", days: 31, index: 7 },
+                    { name: "September", shorthand: "Sep", days: 30, index: 8 },
+                    { name: "October", shorthand: "Oct", days: 31, index: 9 },
+                    { name: "November", shorthand: "Nov", days: 30, index: 10 },
+                    { name: "December", shorthand: "Dec", days: 31, index: 11 }],
+                weekdayInfo: [
+                    { name: "Sunday", shorthand: "Sun" },
+                    { name: "Monday", shorthand: "Mon" },
+                    { name: "Tuesday", shorthand: "Tue" },
+                    { name: "Wednesday", shorthand: "Wed" },
+                    { name: "Thursday", shorthand: "Thu" },
+                    { name: "Friday", shorthand: "Fri" },
+                    { name: "Saturday", shorthand: "Sat" }]
+            },
+            methods: {
+                generatedDays(focusMonth) {
+                    var month = focusMonth.getMonth();
+                    var year = focusMonth.getFullYear();
+                    var firstDayOfMonth = new Date(year, month);
+                    var lastDayOfMonth = new Date(year, month + 1, 0);
+                    var firstDayOfCalendar = new Date(firstDayOfMonth.getTime() - (firstDayOfMonth.getDay() - 0) * 1000 * 24 * 3600);
+                    var lastDayOfCalendar = new Date(lastDayOfMonth.getTime() + (6 - lastDayOfMonth.getDay()) * 1000 * 24 * 3600);
+                    days = [];
+                    for (var i = firstDayOfCalendar; i <= lastDayOfCalendar; i = new Date(i.getTime() + 1000 * 24 * 3600)) {
+                        days.push(i);
+                    }
+                    this.calendarDays = days;
+                    return null;
+                },
+                lastYear() {
+                    var year = this.focusMonth.getFullYear();
+                    var month = this.focusMonth.getMonth();
+                    var temp = new Date(year - 1, month);
+                    this.focusMonth = temp;
+                    this.generatedDays(this.focusMonth);
+                },
+                nextYear() {
+                    var year = this.focusMonth.getFullYear();
+                    var month = this.focusMonth.getMonth();
+                    var temp = new Date(year + 1, month);
+                    this.focusMonth = temp;
+                    this.generatedDays(this.focusMonth);
+                },
+                focusOnDay(focusDay) {
+                    if (this.focusDay != focusDay)
+                        this.focusDay = focusDay;
+                    else this.focusDay = today;
+                },
+                clickOnDay(day){
+                    this.focusOnDay(day);
+                },
+                getPopUpStyle(day){
+                    style = "";
+                    style += day.getDay() < 4 ? "left: 108px;" : "right: 308px";
+                    style += day < this.calendarDays[21] ? "" : "bottom: 160px";
+                    return style;
+                }
+            },
+            created: function () {
+                this.generatedDays(this.focusDay);
+                this.focusMonth = new Date(this.today.getFullYear(), this.today.getMonth());
             }
         });
     });
@@ -166,26 +174,24 @@
         color: #51565d;
     }
 
-    .calendar {
-        display: grid;
-        width: 100%;
-        grid-template-columns: repeat(7, minmax(120px, 1fr));
-        grid-template-rows: 50px;
-        grid-auto-rows: 120px;
-        overflow: auto;
-
-    }
-
-    .calendar-container {
-        width: 90%;
-        margin: auto;
-        overflow: hidden;
-        font-family: Montserrat, "sans-serif";
-        box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
-        border-radius: 10px;
-        background: #fff;
-        max-width: 1200px;
-    }
+.calendar {
+    display: grid;
+    width: 100%;
+    grid-auto-columns: minmax(120px, 1fr);
+    grid-template-rows: 50px;
+    grid-auto-rows: 120px;
+    overflow: auto;
+}
+.calendar-container {
+    width: 90%;
+    margin: auto;
+    overflow: hidden;
+    font-family: Montserrat, "sans-serif";
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    background: #fff;
+    max-width: 1200px;
+}
 
     .calendar-header {
         text-align: center;
@@ -215,19 +221,17 @@
         outline: 0;
     }
 
-    .day {
-        border-bottom: 1px solid rgba(166, 168, 179, 0.12);
-        border-right: 1px solid rgba(166, 168, 179, 0.12);
-        text-align: right;
-        padding: 14px 20px;
-        letter-spacing: 1px;
-        font-size: 12px;
-        box-sizing: border-box;
-        color: #98a0a6;
-        position: relative;
-        pointer-events: none;
-        z-index: 1;
-    }
+.day {
+    border-bottom: 1px solid rgba(166, 168, 179, 0.12);
+    border-right: 1px solid rgba(166, 168, 179, 0.12);
+    text-align: right;
+    padding: 14px 20px;
+    letter-spacing: 1px;
+    font-size: 12px;
+    box-sizing: border-box;
+    color: #98a0a6;
+    position: relative;
+}
 
     .day:nth-of-type(7n + 7) {
         border-right: 0;
@@ -398,5 +402,85 @@
         margin-bottom: 0;
         font-weight: 500;
         color: rgba(#51565d, .7);
+    }
+
+ .light {
+     background-color: #fff;
+ }
+
+ .popup_calendar {
+     text-align: left;
+     width: 280px;
+     box-shadow: 0px 0px 35px -16px rgba(0, 0, 0, 0.75);
+     font-family: 'Roboto', sans-serif;
+     padding: 20px;
+     color: #363b41;
+     background-color: #FFFFFF;
+     display: inline-block;
+     z-index: 200;
+     position: relative;
+ }
+
+    .calendar_header {
+        border-bottom: 2px solid rgba(0, 0, 0, 0.08);
+    }
+
+    .header_title {
+        font-size: 20px;
+    }
+
+    .calendar_events {
+        color: #A39D9E;
+    }
+
+    .ce_title {
+        font-size: 14px;
+    }
+
+    .event_item {
+        margin: 6px 0;
+        padding: 4px;
+        cursor: pointer;
+    }
+
+    .event_item:hover {
+        background-image: linear-gradient(-222deg, #FF8494, #ffa9b7);
+        box-shadow: 0px 0px 52px -18px rgba(0, 0, 0, 0.75);
+    }
+
+    .event_item:hover .ei_Dot {
+        background-color: #fff;
+    }
+
+    .event_item:hover .ei_Copy,
+    .event_item:hover .ei_Title {
+        color: #fff;
+    }
+
+    .ei_Dot,
+    .ei_Title {
+        display: inline-block;
+    }
+
+    .ei_Dot {
+        border-radius: 50%;
+        width: 10px;
+        height: 10px;
+        background-color: #A39D9E;
+        box-shadow: 0px 0px 52px -18px rgba(0, 0, 0, 0.75);
+    }
+
+    .dot_active {
+        background-color: #FF8494;
+    }
+
+    .ei_Title {
+        margin-left: 10px;
+        color: #363b41;
+    }
+
+    .ei_Copy {
+        font-size: 12px;
+        margin-left: 27px;
     }
 </style>

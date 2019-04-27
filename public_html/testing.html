@@ -1,0 +1,86 @@
+<html>
+<style>
+    .light {
+        background-color: #fff;
+    }
+    .popup_calendar {
+        width: 280px;
+        box-shadow: 0px 0px 35px -16px rgba(0, 0, 0, 0.75);
+        font-family: 'Roboto', sans-serif;
+        padding: 20px;
+        color: #363b41;
+        display: inline-block;
+    }
+    .calendar_header {
+        border-bottom: 2px solid rgba(0, 0, 0, 0.08);
+    }
+    .header_title{
+        font-size: 20px;
+    }
+    .calendar_events {
+        color: #A39D9E;
+    }
+    .ce_title {
+        font-size: 14px;
+    }
+    .event_item {
+        margin: 6px 0;
+        padding: 4px;
+        cursor: pointer;
+    }
+    .event_item:hover {
+        background-image: linear-gradient(-222deg, #FF8494, #ffa9b7);
+        box-shadow: 0px 0px 52px -18px rgba(0, 0, 0, 0.75);
+    }
+    .event_item:hover .ei_Dot {
+        background-color: #fff;
+    }
+    .event_item:hover .ei_Copy,
+    .event_item:hover .ei_Title {
+        color: #fff;
+    }
+    .ei_Dot,
+    .ei_Title {
+        display: inline-block;
+    }
+    .ei_Dot {
+        border-radius: 50%;
+        width: 10px;
+        height: 10px;
+        background-color: #A39D9E;
+        box-shadow: 0px 0px 52px -18px rgba(0, 0, 0, 0.75);
+    }
+    .dot_active {
+        background-color: #FF8494;
+    }
+    .ei_Title {
+        margin-left: 10px;
+        color: #363b41;
+    }
+    .ei_Copy {
+        font-size: 12px;
+        margin-left: 27px;
+    }
+</style>
+
+<body>
+        <div class="popup_calendar light">
+            <div class="calendar_header">
+                <h1 class="header_title">Welcome Back</h1>
+            </div>
+            <div class="calendar_events">
+                <p class="ce_title">Upcoming Events</p>
+                <div class="event_item">
+                    <div class="ei_Dot dot_active"></div>
+                    <div class="ei_Title">10:30 am</div>
+                    <div class="ei_Copy">Monday briefing with the team</div>
+                </div>
+                <div class="event_item">
+                    <div class="ei_Dot"></div>
+                    <div class="ei_Title">12:00 pm</div>
+                    <div class="ei_Copy">Lunch for with the besties</div>
+                </div>
+            </div>
+        </div>
+</body>
+</html>
