@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Social Planner</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script>
+    <script src="./script.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <navbar :status="status"></navbar>
+        <div class="people-container mt-5">
+            <div class="friends-container">
+                <div class="friends-header">
+                        <p>Friends List</p>
+                </div>
+                <div class="friends-list">
+                    <div class="friends-list-item" v-for="friend in friends">
+                        <div class="friend-img">
+                            <img src="" width="30" height="30" class="d-inline-block align-top" alt="">
+                        </div>
+                        <div class="friend-info">
+                            <span>{{friend.nickname}}        </span>
+                            <span>{{friend.firstName}} {{friend.lastName}}</span>
+                            <span>Last Meeting Time: {{friend.lastMeetingTime}}</span>
+                            <button v-if="!friend.picked"> > </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="groups-container">
+                <div class="groups-header">
+                        <p>Groups List</p>
+                </div>
+                <div class="groups-list">
+                    <div class="groups-list-item" v-for="group in groups">
+                        <div class="group-img">
+                            <img src="" width="30" height="30" class="d-inline-block align-top" alt="">
+                        </div>
+                        <div class="group-info">
+                            <span>{{group.groupname}}        </span>
+                            <span>Last Meeting Time: {{group.lastMeetingTime}}</span>
+                            <button v-if="!group.picked"> > </button>
+                        </div>
+                        <div class="group-member-container popup">
+                                <div class="gfriends-list">
+                                    <div class="gfriends-list-item" v-for="friend in group.grouplist">
+                                        <div class="friend-img">
+                                            <img src="" width="30" height="30" class="d-inline-block align-top" alt="">
+                                        </div>
+                                        <div class="friend-info">
+                                            <span>{{friend.nickname}}        </span>
+                                            <span>{{friend.firstName}} {{friend.lastName}}</span>
+                                        </div>
+                                    </span>
+                                </div>
+                        </div>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="priorities-container">
+            <div class="priorities-header">
+                <p>Who you like to meet?</p>
+            </div>
+            <div class="priorities-list">
+                <div class="priorities-list-item" v-for="priority in priorities">
+                        <div class="friends-list-item" v-if="priority.nickname">
+                                <div class="friend-img">
+                                    <img src="" width="30" height="30" class="d-inline-block align-top" alt="">
+                                </div>
+                                <div class="friend-info">
+                                    <span>{{priority.nickname}}        </span>
+                                    <span>{{priority.firstName}} {{priority.lastName}}</span>
+                                    <span>Last Meeting Time: {{priority.lastMeetingTime}}</span>
+                                    <button> x </button><button> ^ </button><button> v </button><button> T </button>
+                                </div>
+                            </div>
+                        <div class="groups-list-item" v-if="priority.groupname">
+                                <div class="group-img">
+                                    <img src="" width="30" height="30" class="d-inline-block align-top" alt="">
+                                </div>
+                                <div class="group-info">
+                                    <span>{{priority.groupname}}        </span>
+                                    <span>Last Meeting Time: {{priority.lastMeetingTime}}</span>
+                                    <button @click="removePriority(priority)"> x </button><button @click="upPriority(priority)"> ^ </button><button @click="downPriority(priority)"> v </button><button @click="topPriority(priority)"> T </button>
+                                </div>
+                                <div class="group-member-container popup">
+                                        <div class="gfriends-list">
+                                            <div class="gfriends-list-item" v-for="friend in priority.grouplist">
+                                                <div class="friend-img">
+                                                    <img src="" width="30" height="30" class="d-inline-block align-top" alt="">
+                                                </div>
+                                                <div class="friend-info">
+                                                    <span>{{friend.nickname}}        </span>
+                                                    <span>{{friend.firstName}} {{friend.lastName}}</span>
+                                                </div>
+                                            </span>
+                                        </div>
+                                </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>

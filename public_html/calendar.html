@@ -145,8 +145,8 @@
                 },
                 getPopUpStyle(day){
                     style = "";
-                    style += day.getDay() < 4 ? "left: 108px;" : "right: 308px";
-                    style += day < this.calendarDays[21] ? "" : "bottom: 160px";
+                    style += day.getDay() < 4 ? "left: 108px;" : "right: 308px;";
+                    style += day < this.calendarDays[21] ? "" : "bottom: 160px;";
                     return style;
                 }
             },
@@ -180,7 +180,7 @@
     grid-auto-columns: minmax(120px, 1fr);
     grid-template-rows: 50px;
     grid-auto-rows: 120px;
-    overflow: auto;
+    overflow:hidden;
 }
 .calendar-container {
     width: 90%;

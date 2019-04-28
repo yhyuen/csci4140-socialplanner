@@ -39,6 +39,21 @@ window.addEventListener('load', function () {
             status: {
                 login: false
             },
+            friends: [
+                {nickname: "Sosad", firstName: "Kwok Hang", lastName: "Lau", lastMeetingTime: null, picked: false},
+                {nickname: "Ben Yuen", firstName: "Yat Hang", lastName: "Yuen", lastMeetingTime: null, picked: false},
+                {nickname: "Us", firstName: "U", lastName: "s", lastMeetingTime: null, picked: true}
+            ],
+            groups: [
+                {groupname: "6E", createDate: null, lastMeetingTime: null, picked: false, grouplist: [    
+                        {nickname: "Sosad", firstName: "Kwok Hang", lastName: "Lau", lastMeetingTime: null},
+                        {nickname: "Ben Yuen", firstName: "Yat Hang", lastName: "Yuen", lastMeetingTime: null} 
+                    ]
+                }
+            ],
+            priorities: [
+                {nickname: "Us", firstName: "U", lastName: "s", lastMeetingTime: null, picked: true}
+            ]
         },
         methods: {
             regNext() {
@@ -86,12 +101,11 @@ Vue.component('navbar', {
                         <a class="dropdown-item" href="">Event Suggested</a>
                     </div>
                 </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="" id="dropdown01" data-toggle="dropdown"
-                        aria-haspopup="true" aria-expanded="false">Your Profile</a>
-                    <div class="dropdown-menu" aria-labelledby="dropdown01">
-                        <a class="dropdown-item" href="">View Your Profile</a>
-                        <a class="dropdown-item" href="">Edit Your Profile</a>
+                <li class="nav-item">
+                    <a class="nav-link dropdown-toggle" href="profile.html">Your Profile</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="friends.html">Your Friends</a>
                     </div>
                 </li>
             </ul>
