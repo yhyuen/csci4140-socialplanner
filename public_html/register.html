@@ -16,10 +16,13 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
         integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
         crossorigin="anonymous"></script>
+        <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script src="./script.js"></script>
 
 
 </head>
+
+<script> var json = DATAJSON </script>
 
 <body>
     <div id="app">
@@ -40,14 +43,25 @@
             <p class="item-name">Your Name:</p>
             <div class="form-container">
                 <div class="form-label-group float-left">
-                    <input type="name" id="inputFirstName" class="form-control" placeholder="First Name" v-model="register.name.firstName" required autofocus>
+                    <input type="name" id="inputFirstName" class="form-control" placeholder="First Name" v-model="register.firstName" required autofocus>
                     <label for="inputFirstName">First Name</label>
                 </div>
                 <div class="form-label-group float-right">
-                    <input type="name" id="inputLastName" class="form-control" placeholder="Last Name" v-model="register.name.lastName" required autofocus>
+                    <input type="name" id="inputLastName" class="form-control" placeholder="Last Name" v-model="register.lastName" required autofocus>
                     <label for="inputLastName">Last Name</label>
                 </div>
 
+            </div>
+            <p class="item-name">Your Nickname:</p>
+            <div class="form-label-group">
+                <input type="name" id="inputNickname" class="form-control" placeholder="Nickname" v-model="register.nickname" required autofocus>
+                <label for="inputEmail">Nickname</label>
+            </div>
+
+            <p class="item-name">Your Phone No.:</p>
+            <div class="form-label-group">
+                <input type="text" id="inputPhone" class="form-control" placeholder="Phone" v-model="register.phone" required autofocus>
+                <label for="inputPhone">Phone No.</label>
             </div>
 
             <p class="item-name">Your Password:</p>
@@ -61,7 +75,7 @@
                 <input type="password" id="inputRePassword" class="form-control" placeholder="Password" v-model="register.rePassword" required>
                 <label for="inputRePassword">Password</label>
             </div>
-            <button class="btn btn-lg btn-primary btn-block mt-4" type="submit">Register</button>
+            <button class="btn btn-lg btn-primary btn-block mt-4" type="submit" @click="registerRequest(register)">Register</button>
         </form>
     </div>
 </body>
@@ -84,7 +98,7 @@
 
     html,
     body {
-        height: 100%;
+        height: auto;
     }
     #app {
         height: 100%;

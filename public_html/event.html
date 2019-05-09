@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Social Planner</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+        crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/less.js/3.9.0/less.min.js"></script>
+    <script src="./script.js"></script>
+</head>
+
+<script> var json = DATAJSON </script>
+
+<style>
+    .tab-bar {
+        margin-top: 4em;
+    }
+</style>
+
+<body>
+    <div id="app">
+        <navbar :status="status"></navbar>
+        <div class="main">
+            <div class="tab-bar nav-scroller bg-white shadow-sm">
+                <nav class="nav nav-underline">
+                    <div class="tab-block nav-link">To be Proposed</div>
+                    <div class="tab-block nav-link">To be Accepted</div>
+                    <div class="tab-block nav-link">To be Held</div>
+                    <div class="tab-block nav-link">To be Rated</div>
+                    <div class="tab-block nav-link">History</div>
+                </nav>
+            </div>
+            <main role="main" class="container">
+                <div class="tab-container my-3 p-3 bg-white rounded shadow-sm">
+                    <div class="tab-main-area">
+                        <h6 class="tab-header border-bottom border-gray pb-2 mb-0">
+                            Event to be Proposed:
+                        </h6>
+                        <div class="tab-item media text-muted pt-3" v-for="event in events.suggested">
+                            <div class="tab-item-header media-body pb-3 mb-0 small lh-125 border-bottom border-gray">
+                                <button class="tab-item-button btn-sm btn-info float-right ml-3" data-toggle="modal"
+                                    data-target="#eventModal">Detail</button>
+                                <button style="display: none;" class="tab-item-button btn-sm btn-secondary float-right">Propose</button>
+                                <button class="tab-item-button btn-sm btn-warning float-right" data-toggle="modal" data-target="#rateModal">Rate</button>
+                                <strong class="d-block text-gray-dark">Event with
+                                    {{ event.type=="individual" ? event.taker.nickname : event.taker.groupname }} at
+                                    {{event.location.name}} at
+                                    {{event.time.start.getHours()}}:{{event.time.start.getMinutes()}} on
+                                    {{event.time.start.toLocaleDateString()}}
+                                </strong>
+                                <span class="tab-item-content">
+                                    Catagory: {{event.characteristic}}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+            <div class="modal fade" id="rateModal" tabindex="-1" role="dialog"
+                aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">{{ focus.event.type=="individual" ? focus.event.taker.nickname : focus.event.taker.groupname }} at
+                                    {{focus.event.location.name}}</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            How do you rate this experience?<br>
+                            Overall: 
+                            <select><option>1(Worst)</option><option>2</option><option>3</option><option>4</option><option>5(Best)</option></select>
+                            <br>
+                            Distance:
+                            <select><option>1(Too Close)</option><option>2</option><option>3(Just Right)</option><option>4</option><option>5(Too Far)</option></select>
+                            <br>
+                            Content:
+                            <select><option>1(Not interesting)</option><option>2</option><option>3</option><option>4</option><option>5(Very Interesting)</option></select>
+                            <br>
+                            Duration:
+                            <select><option>1(Too Short)</option><option>2</option><option>3(Just Right)</option><option>4</option><option>5(Too Long)</option></select>
+                            <br>
+                            <br>
+                            <br>
+                            Catagory Questions:<br>
+                            How much does the following description suits this Gathering?<br>
+                            Activity:
+                            <select><option>1(Not at All)</option><option>2</option><option>3</option><option>4</option><option>5(Suit best)</option></select>
+                            <br>
+                            Outdoor:
+                            <select><option>1(Not at All)</option><option>2</option><option>3</option><option>4</option><option>5(Suit best)</option></select>
+                            <br>
+                            Swimming:
+                            <select><option>1(Not at All)</option><option>2</option><option>3</option><option>4</option><option>5(Suit best)</option></select>
+                            <br>
+                            <br>
+                            Are there Other Term You can use to Describe it?<br>
+                            <input> <button class="btn-sm btn-primary">Add Catagory</button>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary">Sumbit</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="eventModal" tabindex="-1" role="dialog"
+                aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">{{ focus.event.type=="individual" ? focus.event.taker.nickname : focus.event.taker.groupname }} at
+                                    {{focus.event.location.name}}</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            Time: {{focus.event.time.start.getHours()}}:{{focus.event.time.start.getMinutes()}}<br>
+                            Date: {{focus.event.time.start.toLocaleDateString()}}<br>
+                            Location: {{focus.event.location.name}} in {{focus.event.location.district}} in {{focus.event.location.territory}}<br>
+                            Address: {{focus.event.location.address}}<br>
+                            Catagory Your Group is interested in:<br>
+                            Meal, Lunch, Japanese, Dinner, KoreanBBQ<br>
+                            Activity, Outdoor, Swimming, Bicycle<br>
+                            <br>
+                            <label>Name of Suggestion:</label> <input><br>
+                            <label>Address:</label> <input><br>
+                            <label>District:</label>
+                            <select >
+                                <option>Sha Tin</option>
+                                <option>Tai Po</option>
+                            </select><br>
+                            <label>Territory:</label>
+                            <select >
+                                <option>New Territory</option>
+                                <option>Kowloon</option>
+                                <option>Hong Kong</option>
+                            </select><br>
+
+                            Catagory Your Suggestion Belong in:<br>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="" id="defaultCheck1">
+                                <label class="form-check-label" for="defaultCheck1">
+                                    Meal
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="" id="defaultCheck1">
+                                <label class="form-check-label" for="defaultCheck1">
+                                    Lunch
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="" id="defaultCheck1">
+                                <label class="form-check-label" for="defaultCheck1">
+                                    Japanese
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="" id="defaultCheck1">
+                                <label class="form-check-label" for="defaultCheck1">
+                                    Dinner
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="" id="defaultCheck1">
+                                <label class="form-check-label" for="defaultCheck1">
+                                    KoreanBBQ
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="" id="defaultCheck1">
+                                <label class="form-check-label" for="defaultCheck1">
+                                    Activity
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="" id="defaultCheck1">
+                                <label class="form-check-label" for="defaultCheck1">
+                                    Outdoor
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="" id="defaultCheck1">
+                                <label class="form-check-label" for="defaultCheck1">
+                                    Swimming
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="" id="defaultCheck1">
+                                <label class="form-check-label" for="defaultCheck1">
+                                    Bicycle
+                                </label>
+                            </div>
+                            Other Catagory:<br>
+                            <input> <button class="btn-sm btn-primary">Add Catagory</button>
+
+                            <button style="display: none;" class="btn btn-secondary mt-3">Suggest Alternative Option</button>
+
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary">Save changes</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>

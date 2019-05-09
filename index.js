@@ -1,5 +1,5 @@
 var express = require('express');
-var router = require('./route');
+var router = require('.//route');
 
 
 var app = express();

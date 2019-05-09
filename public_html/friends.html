@@ -4,111 +4,301 @@
     <meta charset="utf-8">
     <title>Social Planner</title>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+        crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
         integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
         integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
         crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script src="./script.js"></script>
+    <style>
+        button {
+            display: inline-block;
+            border-radius: 1em;
+            box-sizing: border-box;
+            text-decoration: none;
+            font-family: 'Roboto', sans-serif;
+            font-weight: 300;
+            font-size: 55%;
+            color: #FFFFFF;
+            background-color: #4eb5f1;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background-color: #4095c6;
+        }
+
+
+        .scroll-box {
+            height: 25vh;
+            overflow-y: scroll;
+            overflow-x: hidden;
+        }
+
+        .small-scroll-box {
+            height: 15vh;
+            overflow-y: scroll;
+            overflow-x: hidden;
+        }
+
+        .priorities-list {
+            height: auto;
+            overflow-y: scroll;
+            overflow-x: hidden;
+        }
+
+        .popup {
+            background-color: #FFFFFF;
+            padding: 10px;
+            z-index: 200;
+            position: absolute;
+            display: inline-block;
+            transform: translateY(-100%) translateX(-100%);
+        }
+
+        .search-bar {
+            width: 100%;
+        }
+
+        .group-info-pop-up {
+            position: absolute;
+            display: block;
+            height: 30vh;
+        }
+    </style>
 </head>
 
+<script> var json = DATAJSON </script>
+
 <body>
-    <div id="app">
+    <div id="app" @click="clearScreen()">
         <navbar :status="status"></navbar>
-        <div class="people-container mt-5">
-            <div class="friends-container">
-                <div class="friends-header">
-                        <p>Friends List</p>
-                </div>
-                <div class="friends-list">
-                    <div class="friends-list-item" v-for="friend in friends">
-                        <div class="friend-img">
-                            <img src="" width="30" height="30" class="d-inline-block align-top" alt="">
+        <main role="main" class="container mt-5">
+            <div class="row">
+                <div class="people-container mt-md-5 col-sm-12 col-md-6 mx-auto">
+                    <div class="friends-container p-3 bg-white rounded shadow">
+                        <div class="friends-header">
+                            <h6 class="border-bottom border-gray pb-1 mb-0">Your Friends List</h6>
                         </div>
-                        <div class="friend-info">
-                            <span>{{friend.nickname}}        </span>
-                            <span>{{friend.firstName}} {{friend.lastName}}</span>
-                            <span>Last Meeting Time: {{friend.lastMeetingTime}}</span>
-                            <button v-if="!friend.picked"> > </button>
+                        <div class="scroll-box">
+                            <div class="friends-list">
+                                <div class="friends-list-item media text-muted pt-1" v-for="friend in friends"
+                                    :key="friend.id">
+                                    <div class="friend-img bd-placeholder-img mr-2 rounded">
+                                        <img src="/public_html/img/default-profile-pic.png" width="20" height="20"
+                                            class="d-inline-block align-top" alt="">
+                                    </div>
+                                    <div
+                                        class="friend-info media-body pb-1 mb-0 small lh-125 border-bottom border-gray">
+                                        <strong class="text-gray-dark">{{friend.nickname}}</strong>
+                                        <span>{{friend.firstName}}, {{friend.lastName}}</span>
+                                        <span>Last Meeting Time: {{friend.lastMeetingTime}}</span>
+                                        <button v-if="!friend.picked" @click="addFriendToPriority(friend.id)"> >
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <small class="d-block text-right mt-3">
+                            <div>
+                                <div class="popup bg-white rounded shadow col-6 text-left" v-if="focus.item.searchBox"
+                                    data-container="body" @click="stopClearing()">
+                                    <div class="friends-list-item media text-muted pt-1"
+                                        v-for="people in people.suggestion" :key="people.id">
+                                        <div class="friend-img bd-placeholder-img mr-2 rounded">
+                                            <img src="/public_html/img/default-profile-pic.png" width="20" height="20"
+                                                class="d-inline-block align-top" alt="">
+                                        </div>
+                                        <div
+                                            class="friend-info media-body pb-1 mb-0 small lh-125 border-bottom border-gray">
+                                            <strong class="text-gray-dark">{{people.nickname}}</strong>
+                                            <span>{{people.firstName}}, {{people.lastName}}</span>
+                                            <button @click="addFriend(people.id)" > + </button>
+                                        </div>
+                                    </div>
+                                    <input placeholder="Phone, Nickname, Name" v-model="people.search"
+                                        class="search-bar mt-2" @change="searchPeople(people.search)" >
+                                </div>
+                            </div>
+                            <a @click="openSearchBox()" >Add Friend</a>
+                        </small>
+                    </div>
+                    <div class="groups-container my-3 p-3 bg-white rounded shadow">
+
+                        <div class="group-info-pop-up p-3 bg-white rounded shadow col-10 mx-auto"
+                            v-if="focus.item.groupInfoBox" @click="stopClearing()">
+                            <div class="groups-header">
+                                <h6 class="border-bottom border-gray pb-1 mb-0">{{focus.group.groupname}}<br>
+                                    <small class="text-muted">Created on: {{focus.group.createDate}}, Last Meeting Date:
+                                        {{focus.group.lastMeetingDate}}</small>
+                                </h6>
+                            </div>
+                            <div class="group-member-container">
+                                <div class="small-scroll-box">
+                                    <div class="gfriends-list">
+                                        <div class="gfriends-list-item media text-muted pt-1"
+                                            v-for="friend in focus.group.grouplist">
+                                            <div class="friend-img bd-placeholder-img mr-2 rounded">
+                                                <img src="/public_html/img/default-group-pic.png" width="20" height="20"
+                                                    class="d-inline-block align-top" alt="">
+                                            </div>
+                                            <div
+                                                class="friend-info  media-body pb-1 mb-0 small lh-125 border-bottom border-gray">
+                                                <span>{{friend.nickname}}, {{friend.firstName}}
+                                                    {{friend.lastName}}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <small class="d-block text-right mt-3">
+                                <div>
+                                    <div class="popup bg-white rounded shadow col-6 text-left"
+                                        v-if="focus.item.searchBoxGroup" data-container="body" @click="stopClearing()">
+                                        <div class="friends-list-item media text-muted pt-1"
+                                            v-for="people in people.suggestion" :key="people.id">
+                                            <div class="friend-img bd-placeholder-img mr-2 rounded">
+                                                <img src="/public_html/img/default-profile-pic.png" width="20" height="20"
+                                                    class="d-inline-block align-top" alt="">
+                                            </div>
+                                            <div
+                                                class="friend-info media-body pb-1 mb-0 small lh-125 border-bottom border-gray">
+                                                <strong class="text-gray-dark">{{people.nickname}}</strong>
+                                                <span>{{people.firstName}}, {{people.lastName}}</span>
+                                                <button @click="addFriend(people.id)"> + </button>
+                                            </div>
+                                        </div>
+                                        <input placeholder="Phone Number" v-model="people.search"
+                                            class="search-bar mt-2" @change="searchPeople(people.search)">
+                                    </div>
+                                </div>
+                                <a @click="openSearchBoxGroup()">Add Friend</a>
+                            </small>
+                        </div>
+
+                        <div class="group-info-pop-up p-3 bg-white rounded shadow col-10 mx-auto"
+                            v-if="focus.item.createGroupBox" @click="stopClearing()">
+                            <div class="groups-header">
+                                <h6 class="border-bottom border-gray pb-1 mb-0">Group Name: <input v-model="focus.group.groupname"></h6>
+                            </div>
+                            <div class="group-member-container">
+                                <div class="small-scroll-box">
+                                    <div class="gfriends-list">
+                                        <div class="gfriends-list-item media text-muted pt-1"
+                                            v-for="friend in focus.group.grouplist">
+                                            <div class="friend-img bd-placeholder-img mr-2 rounded">
+                                                <img src="/public_html/img/default-group-pic.png" width="20" height="20"
+                                                    class="d-inline-block align-top" alt="">
+                                            </div>
+                                            <div
+                                                class="friend-info  media-body pb-1 mb-0 small lh-125 border-bottom border-gray">
+                                                <span>{{friend.nickname}}, {{friend.firstName}}
+                                                    {{friend.lastName}}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <small class="d-block text-right mt-3">
+                                <div>
+                                    <div class="popup bg-white rounded shadow col-6 text-left"
+                                        v-if="focus.item.searchBoxGroup" data-container="body" @click="stopClearing()">
+                                        <div class="friends-list-item media text-muted pt-1"
+                                            v-for="people in people.suggestion" :key="people.id">
+                                            <div class="friend-img bd-placeholder-img mr-2 rounded">
+                                                <img src="/public_html/img/default-profile-pic.png" width="20" height="20"
+                                                    class="d-inline-block align-top" alt="">
+                                            </div>
+                                            <div
+                                                class="friend-info media-body pb-1 mb-0 small lh-125 border-bottom border-gray">
+                                                <strong class="text-gray-dark">{{people.nickname}}</strong>
+                                                <span>{{people.firstName}}, {{people.lastName}}</span>
+                                                <button @click="addFriend(people.id)"> + </button>
+                                            </div>
+                                        </div>
+                                        <input placeholder="Phone Number" v-model="people.search"
+                                            class="search-bar mt-2" @change="searchPeople(people.search)" >
+                                    </div>
+                                </div>
+                                <a @click="openSearchBoxGroup()" >Add Friend</a> <a @click="" >Submit</a>
+                            </small>
+                        </div>
+                        <div class="groups-header">
+                            <h6 class="border-bottom border-gray pb-1 mb-0">Your Groups List</h6>
+                        </div>
+                        <div class="groups-list">
+                            <div class="scroll-box">
+                                <div class="groups-list-item media text-muted pt-1" v-for="group in groups"
+                                    :key="group.id">
+                                    <div class="group-img bd-placeholder-img mr-2 rounded">
+                                        <img src="/public_html/img/default-group-pic.png" width="20" height="20"
+                                            class="d-inline-block align-top" alt="">
+                                    </div>
+                                    <div class="group-info media-body pb-1 mb-0 small lh-125 border-bottom border-gray">
+                                        <strong class="text-gray-dark">{{group.groupname}}</strong>
+                                        <span>Last Meeting Time: {{group.lastMeetingTime}}</span>
+                                        <button @click="showGroupInfo(group.id)"> i </button>
+                                        <button v-if="!group.picked" @click="addGroupToPriority(group.id)"> > </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <small class="d-block text-right mt-3"><a href="#">Create Group</a> </small>
+                    </div>
+                </div>
+
+                <div class="mt-md-5 col-sm-12 col-md-6 mx-auto">
+                    <div class=" p-3 bg-white rounded shadow">
+                        <div class="priorities-header">
+                            <h6 class="border-bottom border-gray pb-1 mb-0">Who you like to meet?</h6>
+                        </div>
+                        <div class="priorities-list">
+                            <div class="priorities-list-item" v-for="priority in priorities" :key="priority.id">
+                                <div class="friends-list-item  media text-muted pt-1" v-if="priority.nickname">
+                                    <div class="friend-img group-img  bd-placeholder-img mr-2 rounded">
+                                        <img src="/public_html/img/default-profile-pic.png" width="20" height="20"
+                                            class="d-inline-block align-top" alt="">
+                                    </div>
+                                    <div
+                                        class="friend-info media-body pb-1 mb-0 small lh-125 border-bottom border-gray">
+                                        <strong class="text-gray-dark">{{priority.nickname}} </strong>
+                                        <span>{{priority.firstName}} {{priority.lastName}}</span>
+                                        <span>Last Meeting Time: {{priority.lastMeetingTime}}</span>
+                                        <button @click="removePriority(priority.id)"> x </button>
+                                        <button @click="moveUpPriority(priority.id)"> ^ </button>
+                                        <button @click="moveDownPriority(priority.id)"> v </button>
+                                        <button @click="moveTopPriority(priority.id)"> T </button>
+                                    </div>
+                                </div>
+                                <div class="groups-list-item media text-muted pt-1" v-if="priority.groupname">
+                                    <div class="group-img group-img  bd-placeholder-img mr-2 rounded">
+                                        <img src="/public_html/img/default-group-pic.png" width="20" height="20"
+                                            class="d-inline-block align-top" alt="">
+                                    </div>
+                                    <div class="group-info media-body pb-1 mb-0 small lh-125 border-bottom border-gray">
+                                        <strong class="text-gray-dark">{{priority.groupname}} </strong>
+                                        <span>Last Meeting Time: {{priority.lastMeetingTime}}</span>
+                                        <button @click="removePriority(priority.id)"> x </button>
+                                        <button @click="moveUpPriority(priority.id)"> ^ </button>
+                                        <button @click="moveDownPriority(priority.id)"> v </button>
+                                        <button @click="moveTopPriority(priority.id)"> T </button>
+                                    </div>
+
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="groups-container">
-                <div class="groups-header">
-                        <p>Groups List</p>
-                </div>
-                <div class="groups-list">
-                    <div class="groups-list-item" v-for="group in groups">
-                        <div class="group-img">
-                            <img src="" width="30" height="30" class="d-inline-block align-top" alt="">
-                        </div>
-                        <div class="group-info">
-                            <span>{{group.groupname}}        </span>
-                            <span>Last Meeting Time: {{group.lastMeetingTime}}</span>
-                            <button v-if="!group.picked"> > </button>
-                        </div>
-                        <div class="group-member-container popup">
-                                <div class="gfriends-list">
-                                    <div class="gfriends-list-item" v-for="friend in group.grouplist">
-                                        <div class="friend-img">
-                                            <img src="" width="30" height="30" class="d-inline-block align-top" alt="">
-                                        </div>
-                                        <div class="friend-info">
-                                            <span>{{friend.nickname}}        </span>
-                                            <span>{{friend.firstName}} {{friend.lastName}}</span>
-                                        </div>
-                                    </span>
-                                </div>
-                        </div>
-                    </span>
-                </div>
-            </div>
-        </div>
-
-        <div class="priorities-container">
-            <div class="priorities-header">
-                <p>Who you like to meet?</p>
-            </div>
-            <div class="priorities-list">
-                <div class="priorities-list-item" v-for="priority in priorities">
-                        <div class="friends-list-item" v-if="priority.nickname">
-                                <div class="friend-img">
-                                    <img src="" width="30" height="30" class="d-inline-block align-top" alt="">
-                                </div>
-                                <div class="friend-info">
-                                    <span>{{priority.nickname}}        </span>
-                                    <span>{{priority.firstName}} {{priority.lastName}}</span>
-                                    <span>Last Meeting Time: {{priority.lastMeetingTime}}</span>
-                                    <button> x </button><button> ^ </button><button> v </button><button> T </button>
-                                </div>
-                            </div>
-                        <div class="groups-list-item" v-if="priority.groupname">
-                                <div class="group-img">
-                                    <img src="" width="30" height="30" class="d-inline-block align-top" alt="">
-                                </div>
-                                <div class="group-info">
-                                    <span>{{priority.groupname}}        </span>
-                                    <span>Last Meeting Time: {{priority.lastMeetingTime}}</span>
-                                    <button @click="removePriority(priority)"> x </button><button @click="upPriority(priority)"> ^ </button><button @click="downPriority(priority)"> v </button><button @click="topPriority(priority)"> T </button>
-                                </div>
-                                <div class="group-member-container popup">
-                                        <div class="gfriends-list">
-                                            <div class="gfriends-list-item" v-for="friend in priority.grouplist">
-                                                <div class="friend-img">
-                                                    <img src="" width="30" height="30" class="d-inline-block align-top" alt="">
-                                                </div>
-                                                <div class="friend-info">
-                                                    <span>{{friend.nickname}}        </span>
-                                                    <span>{{friend.firstName}} {{friend.lastName}}</span>
-                                                </div>
-                                            </span>
-                                        </div>
-                                </div>
-                </div>
-            </div>
-        </div>
+        </main>
     </div>
 </body>

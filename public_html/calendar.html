@@ -15,17 +15,22 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
         integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
         crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 </head>
+
+<script> var json = DATAJSON </script>
 
 <body>
     <div id="calendarbox">
-        <div class="calendar-container">
+        <navbar :status="status" ></navbar>
+        <div class="calendar-container mt-5">
             <div class="calendar-header">
                 <h1>
-                    <select v-model="focusMonth" @change="generatedDays(focusMonth)">
+                    <select class="month-option" v-model="focusMonth" @change="generatedDays(focusMonth); getMonthEvent()">
                         <option v-for="{name, shorthand, days, index} in monthInfo"
                             :value="new Date(focusMonth.getFullYear(),index)"
-                            v-bind:selected="index==focusDay.getMonth()" :x="index==focusDay.getMonth()">{{name}}
+                            v-bind:selected="index==focusDay.getMonth()"  :x="index==focusDay.getMonth()">
+                            {{name}}
                         </option>
                     </select>
                 </h1>
@@ -34,52 +39,113 @@
             </div>
             <div class="calendar">
                 <span class="day-name" v-for="weekday in weekdayInfo">{{weekday.shorthand}}</span>
-                <div class="day" v-for="calendarDay in calendarDays" @click="clickOnDay(calendarDay)">
-                    {{calendarDay.getDate()}}
-                    <div class="popup_calendar light" data-container="body" v-if="calendarDay == focusDay" :style="getPopUpStyle(focusDay)">
+                <div class="day" v-for="calendarDay in calendarDays" @click="clickOnDay(calendarDay.day)">
+                    {{calendarDay.day.getDate()}}
+
+                    <section class="task" v-for="event in calendarDay.events">{{event.name}}</section>
+                    <div class="popup_calendar light" data-container="body" v-if="calendarDay.day == focusDay"
+                        :style="getPopUpStyle(calendarDay.day)">
                         <div class="calendar_header">
-                            <h1 class="header_title">{{monthInfo[focusDay.getMonth()].name}} {{focusDay.getDate()}}, {{focusDay.getFullYear()}}</h1>
+                            <h1 class="header_title">
+                                {{monthInfo[focusDay.getMonth()].name}} {{focusDay.getDate()}},
+                                {{focusDay.getFullYear()}}</h1>
                         </div>
                         <div class="calendar_events">
-                            <p class="ce_title">Upcoming Events</p>
-                            <div class="event_item">
-                                <div class="ei_Dot dot_active"></div>
-                                <div class="ei_Title">10:30 am</div>
-                                <div class="ei_Copy">Monday briefing with the team</div>
+                            <p class="ce_title">Events</p>
+                            <div class="event_item" v-for="item in dayEventList">
+                                <div class="ei_Dot" v-if="item.end <= new Date()"></div>
+                                <div class="ei_Dot dot_active" v-else></div>
+                                <div class="ei_Title">{{item.startTime.toLocaleTimeString()}} -
+                                    {{item.endTime.toLocaleTimeString()}}</div>
+                                <span class="ei_Delete">[Delete]</span>
+                                <div class="ei_Copy">{{item.name}}</div>
                             </div>
-                            <div class="event_item">
-                                <div class="ei_Dot"></div>
-                                <div class="ei_Title">12:00 pm</div>
-                                <div class="ei_Copy">Lunch for with the besties</div>
+                        </div>
+                        <button class="btn-sm btn-primary mt-2" @click="focus.addEventInfo = true"
+                            v-if="!focus.addEventInfo"><small>Add
+                                Event</small></button>
+                        <div v-if="focus.addEventInfo">
+                            <div class="calendar_header">
+                                <h1 class="header_title">New event</h1>
                             </div>
+                            <div class="mt-2">
+                                <label>Name of Event:</label><input class="popup-input" v-model="focus.event.name"><br>
+                                <label>Start Time:</label>
+                                <select class="popup-option" v-model="focus.event.startHour">
+                                    <option v-for="i in [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23]"
+                                        :value="i">{{i}}</option>
+                                </select>
+                                :
+                                <select class="popup-option" v-model="focus.event.startMinute">
+                                    <option v-for="i in [0,5,10,15,20,25,30,35,40,45,50,55]" :value="i">{{i}}</option>
+                                </select>
+                                <br>
+                                <label>End Time:</label>
+                                <select class="popup-option" v-model="focus.event.endHour">
+                                    <option v-for="i in [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23]"
+                                        :value="i">{{i}}</option>
+                                </select>
+                                :
+                                <select class="popup-option" v-model="focus.event.endMinute">
+                                    <option v-for="i in [0,5,10,15,20,25,30,35,40,45,50,55]" :value="i">{{i}}</option>
+                                </select>
+                                <br>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" v-model="focus.eventRepeating"
+                                        id="repeatingEvent">
+                                    <label class="form-check-label" for="repeatingEvent">
+                                        Repeating Event
+                                    </label>
+                                </div>
+                                <div v-if="focus.eventRepeating" class="mt-2">
+                                    <label>Repeat Type:</label>
+                                    <select class="popup-option" v-model="focus.event.repeatType">
+                                        <option value="day">Day</option>
+                                        <option value="workday">Workday</option>
+                                        <option value="week">Week</option>=
+                                    </select>
+                                    <br>
+                                    <label>Start Date:</label>
+                                    {{focusDay.getDate()}}/{{focusDay.getMonth()+1}}/{{focusDay.getFullYear()}}
+                                    <br>
+                                    <label>End Date:</label>
+                                    <select class="popup-option" v-model="focus.event.endDay">
+                                        <option v-for="i in monthInfo[focus.event.endMonth].days" :value="i">{{i}}
+                                        </option>
+                                    </select>
+                                    /
+                                    <select class="popup-option" v-model="focus.event.endMonth">
+                                        <option v-for="i in monthInfo" :value="i.index">{{i.index + 1}}</option>
+                                    </select>
+                                    /
+                                    <select class="popup-option" v-model="focus.event.endYear">
+                                        <option v-for="i in [2019,2020,2021,2022]" :value="i">{{i}}</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button class="btn-sm btn-primary mt-2"
+                                @click="submitEvent()"><small>Sumbit</small></button>
+                            <button class="btn-sm btn-primary"
+                                @click="focus.addEventInfo = false"><small>Cancel</small></button>
                         </div>
                     </div>
                 </div>
-
-
-
-                <section class="task task--warning">Projects</section>
-                <section class="task task--danger">Design Sprint</section>
-                <section class="task task--primary">Product Checkup 1
-                    <div class="task__detail">
-                        <h2>Product Checkup 1</h2>
-                        <p>15-17th November</p>
-                    </div>
-                </section>
-                <section class="task task--info">Product Checkup 2</section>
             </div>
         </div>
     </div>
-
 </body>
 
 <script>
     var calVue;
     window.addEventListener('load', function () {
+
         var today = new Date();
         calVue = new Vue({
             el: '#calendarbox',
             data: {
+                status:  {
+                    login: false
+                },
                 today: today,
                 focusDay: today,
                 focusMonth: null,
@@ -104,7 +170,13 @@
                     { name: "Wednesday", shorthand: "Wed" },
                     { name: "Thursday", shorthand: "Thu" },
                     { name: "Friday", shorthand: "Fri" },
-                    { name: "Saturday", shorthand: "Sat" }]
+                    { name: "Saturday", shorthand: "Sat" }],
+                dayEventList: [],
+                eventList: [],
+                focus: {
+                    addEventInfo: false, eventRepeating: false,
+                    event: { name: "", startHour: 0, startMinute: 0, endHour: 0, endMinute: 0, repeatType: "day", startYear: null, startMonth: null, startDay: null, endYear: null, endMonth: null, endDay: null },
+                }
             },
             methods: {
                 generatedDays(focusMonth) {
@@ -116,7 +188,7 @@
                     var lastDayOfCalendar = new Date(lastDayOfMonth.getTime() + (6 - lastDayOfMonth.getDay()) * 1000 * 24 * 3600);
                     days = [];
                     for (var i = firstDayOfCalendar; i <= lastDayOfCalendar; i = new Date(i.getTime() + 1000 * 24 * 3600)) {
-                        days.push(i);
+                        days.push({ day: i, events: [] });
                     }
                     this.calendarDays = days;
                     return null;
@@ -140,23 +212,147 @@
                         this.focusDay = focusDay;
                     else this.focusDay = today;
                 },
-                clickOnDay(day){
-                    this.focusOnDay(day);
-                },
-                getPopUpStyle(day){
-                    style = "";
-                    style += day.getDay() < 4 ? "left: 108px;" : "right: 308px;";
-                    style += day < this.calendarDays[21] ? "" : "bottom: 160px;";
+                clickOnDay(day) {
+                    if (this.focusDay != day) {
+                        var startTime = day;
+                        var endTime = new Date(day.getTime() + 1000 * 24 * 3600);
+                        this.dayEventList = [];
+                        for (var i = 0; i < this.eventList.length; i++) {
+                            var item = this.eventList[i];
+                            if (item.startTime <= startTime && item.endTime >= startTime)
+                                this.dayEventList.push(item);
+                            else if (item.startTime >= startTime && item.endTime <= endTime)
+                                this.dayEventList.push(item);
+                            else if (item.endTime >= endTime && item.startTime <= endTime)
+                                this.dayEventList.push(item);
+                        }
+                        this.focusOnDay(day);
+                        this.focus.addEventInfo = false;
+                        this.focus.eventRepeating = false;
+                        this.focus.event.startYear = this.focusDay.getFullYear();
+                        this.focus.event.endYear = this.focusDay.getFullYear();
+                        this.focus.event.startMonth = this.focusDay.getMonth();
+                        this.focus.event.endMonth = this.focusDay.getMonth();
+                        this.focus.event.startDay = this.focusDay.getDate();
+                        this.focus.event.endDay = this.focusDay.getDate();
+                    }
+                }
+                ,
+                getPopUpStyle(day) {
+                    style = "transform:";
+                    style += day.getDay() < 4 ? "" : "translateX(-100%)";
+                    style += day < this.calendarDays[21] ? "" : "translateY(-100%)";
+                    style += ";"
                     return style;
+                },
+                submitEvent() {
+                    var name = this.focus.event.name;
+                    var startTime = new Date(this.focusDay.getFullYear(), this.focusDay.getMonth(), this.focusDay.getDate(), this.focus.event.startHour, this.focus.event.startMinute);
+                    var endTime = new Date(this.focusDay.getFullYear(), this.focusDay.getMonth(), this.focusDay.getDate(), this.focus.event.endHour, this.focus.event.endMinute);
+                    var repeating = this.focus.eventRepeating;
+                    var repeatType = null
+                    var repeatEnd = null
+                    if (repeating) {
+                        repeatType = this.focus.event.repeatType;
+                        repeatEnd = new Date(this.focus.event.endYear, this.focus.event.endMonth, this.focus.event.endDay);
+                    }
+                    var data = { name: name, startTime: startTime, endTime: endTime, repeating: repeating, repeatType: repeatType, repeatEnd: repeatEnd };
+                    if (startTime > endTime) {
+                        alert("Error: Start Time after End Time");
+                    }
+                    else if (startTime < new Date()) {
+                        alert("New Event cannot be in the Past");
+                    }
+                    else {
+                        axios.post('/newEventRequest', data)
+                            .then(function (response) {
+                                window.location.href = "calendar.html"
+                            });
+                    }
+                },
+                getMonthEvent() {
+                    var _this = this;
+                    console.log("Get Month Event");
+                    axios.post('/getMonthEventRequest', { month: this.focusMonth })
+                        .then(function (response) {
+                            _this.eventList = response.data.eventList;
+                            for (var i = 0; i < _this.eventList.length; i++) {
+                                _this.eventList[i].startTime = new Date(_this.eventList[i].startTime);
+                                _this.eventList[i].endTime = new Date(_this.eventList[i].endTime);
+                                if (_this.eventList[i].repeatEnd != null) _this.eventList[i].repeatEnd = new Date(_this.eventList[i].repeatEnd);
+                            }
+                            for (var i = 0; i < _this.calendarDays.length; i++) {
+                                for (var j = 0; j < _this.eventList.length; j++) {
+                                    if (_this.eventList[j].startTime >= _this.calendarDays[i].day && _this.eventList[j].endTime.getTime() <= _this.calendarDays[i].day.getTime() + 3600 * 1000 * 24)
+                                        _this.calendarDays[i].events.push(_this.eventList[j]);
+                                }
+                            }
+                        });
                 }
             },
             created: function () {
                 this.generatedDays(this.focusDay);
                 this.focusMonth = new Date(this.today.getFullYear(), this.today.getMonth());
-            }
+            },
+            mounted() {
+                this.getMonthEvent();
+                if(json != null && json != undefined){
+                    this.status = json.status;
+                }
+            },
         });
     });
 
+    Vue.component('navbar', {
+    props: {
+        status: {
+            login: false
+        }
+    },
+    template: `
+    <nav class="navbar navbar-expand-lg fixed-top navbar-light navbar-collapse" style="background-color: #e3f2fd;">
+        <a class="navbar-brand" href="index.html">
+            <img src="" width="30" height="30" class="d-inline-block align-top" alt="">
+            Social Planner
+        </a>
+        <button type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation" class="navbar-toggler collapsed"><span class="navbar-toggler-icon"></span></button>
+        <div class="navbar-collapse offcanvas-collapse collapse" id="navbarsExampleDefault">
+            <ul class="navbar-nav mr-auto">
+                <!-- <li class="nav-item active">
+                    <a class="nav-link" href="">Your Calender</a>
+                </li> -->
+                <li class="nav-item">
+                    <a class="nav-link" href="calendar.html">Calender</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="event.html">Events</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="friends.html">Friends and Groups</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="profile.html">Profile</a>
+                </li>
+            </ul>
+            <div class="form-inline my-2 my-lg-0">
+                <button v-if="!status.login" class="btn btn-outline-success my-2 my-sm-0" type="submit" onclick="location.href='login.html'">Login</button>
+                <button v-else class="btn btn-outline-danger my-2 my-sm-0" type="submit" @click="logoutRequest()">Logout</button>
+            </div>
+        </div>
+    </nav>`,
+    methods: {
+        logoutRequest(){
+            axios.get('/logoutRequest')
+                .then(function(response){
+                    if(response.data.success){
+                        alert("Successfully Logout-ed");
+                        window.location.href = "index.html"
+                    }
+                    else alert("Logout Failed due to Unknown Reason");
+                });
+        }
+    }
+});
 
 </script>
 
@@ -174,24 +370,34 @@
         color: #51565d;
     }
 
-.calendar {
-    display: grid;
-    width: 100%;
-    grid-auto-columns: minmax(120px, 1fr);
-    grid-template-rows: 50px;
-    grid-auto-rows: 120px;
-    overflow:hidden;
-}
-.calendar-container {
-    width: 90%;
-    margin: auto;
-    overflow: hidden;
-    font-family: Montserrat, "sans-serif";
-    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
-    background: #fff;
-    max-width: 1200px;
-}
+    .month-option{
+        background: linear-gradient(to bottom, rgb(250, 251, 253) 0%, rgba(255, 255, 255, 0) 100%);
+        border: 0px;
+    }
+
+    .month-option:focus{
+        outline: none;
+    }
+
+    .calendar {
+        display: grid;
+        width: 100%;
+        grid-auto-columns: minmax(120px, 1fr);
+        grid-template-rows: 50px;
+        grid-auto-rows: 120px;
+        overflow: scroll;
+    }
+
+    .calendar-container {
+        width: 90%;
+        margin: auto;
+        overflow: hidden;
+        font-family: Montserrat, "sans-serif";
+        box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+        border-radius: 10px;
+        background: #fff;
+        max-width: 1200px;
+    }
 
     .calendar-header {
         text-align: center;
@@ -221,17 +427,17 @@
         outline: 0;
     }
 
-.day {
-    border-bottom: 1px solid rgba(166, 168, 179, 0.12);
-    border-right: 1px solid rgba(166, 168, 179, 0.12);
-    text-align: right;
-    padding: 14px 20px;
-    letter-spacing: 1px;
-    font-size: 12px;
-    box-sizing: border-box;
-    color: #98a0a6;
-    position: relative;
-}
+    .day {
+        border-bottom: 1px solid rgba(166, 168, 179, 0.12);
+        border-right: 1px solid rgba(166, 168, 179, 0.12);
+        text-align: right;
+        padding: 14px 20px;
+        letter-spacing: 1px;
+        font-size: 12px;
+        box-sizing: border-box;
+        color: #98a0a6;
+        position: relative;
+    }
 
     .day:nth-of-type(7n + 7) {
         border-right: 0;
@@ -303,123 +509,32 @@
     }
 
     .task {
-        border-left-width: 3px;
-        padding: 8px 12px;
-        margin: 10px;
-        border-left-style: solid;
-        font-size: 14px;
-        position: relative;
-    }
-
-    .task--warning {
-        border-left-color: #fdb44d;
-        grid-column: 4 / span 3;
-        grid-row: 3;
-        background: #fef0db;
-        align-self: center;
-        color: darken(#fdb44d, 12%);
-        margin-top: -5px;
-    }
-
-    .task--danger {
-        border-left-color: #fa607e;
-        grid-column: 2 / span 3;
-        grid-row: 3;
-        margin-top: 15px;
-        background: rgba(#fdc5d0, 0.7);
-        align-self: end;
-        color: darken(#fa607e, 12%);
-    }
-
-    .task--info {
-        border-left-color: #4786ff;
-        grid-column: 6 / span 2;
-        grid-row: 5;
-        margin-top: 15px;
-        background: rgba(#dae7ff, 0.7);
-        align-self: end;
-        color: darken(#4786ff, 12%);
-    }
-
-    .task--primary {
         background: #4786ff;
         border: 0;
         border-radius: 4px;
-        grid-column: 3 / span 3;
-        grid-row: 4;
-        align-self: end;
+        padding: 2px 6px;
+        margin-bottom: 2px;
+        border-left-style: solid;
+        font-size: 10px;
         color: #fff;
         box-shadow: 0 10px 14px rgba(#4786ff, 0.4);
     }
 
-    .task__detail {
-        position: absolute;
-        left: 0;
-        top: calc(100% + 10px);
-        background: #fff;
-        border: 1px solid rgba(166, 168, 179, 0.2);
-        color: #000;
+    .light {
+        background-color: #fff;
+    }
+
+    .popup_calendar {
+        text-align: left;
+        width: 280px;
+        box-shadow: 0px 0px 35px -16px rgba(0, 0, 0, 0.75);
+        font-family: 'Roboto', sans-serif;
         padding: 20px;
-        box-sizing: border-box;
-        border-radius: 4px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-        z-index: 2;
+        color: #363b41;
+        background-color: #FFFFFF;
+        z-index: 200;
+        position: relative;
     }
-
-    .task__detail:after,
-    .task__detail:before {
-        bottom: 100%;
-        left: 30%;
-        border: solid transparent;
-        content: " ";
-        height: 0;
-        width: 0;
-        position: absolute;
-        pointer-events: none;
-    }
-
-    .task__detail:before {
-        border-bottom-color: rgba(166, 168, 179, 0.2);
-        border-width: 8px;
-        margin-left: -8px;
-    }
-
-    .task__detail:after {
-        border-bottom-color: #fff;
-        border-width: 6px;
-        margin-left: -6px;
-    }
-
-    .task__detail h2 {
-        font-size: 15px;
-        margin: 0;
-        color: #51565d;
-    }
-
-    .task__detail p {
-        margin-top: 4px;
-        font-size: 12px;
-        margin-bottom: 0;
-        font-weight: 500;
-        color: rgba(#51565d, .7);
-    }
-
- .light {
-     background-color: #fff;
- }
-
- .popup_calendar {
-     text-align: left;
-     width: 280px;
-     box-shadow: 0px 0px 35px -16px rgba(0, 0, 0, 0.75);
-     font-family: 'Roboto', sans-serif;
-     padding: 20px;
-     color: #363b41;
-     background-color: #FFFFFF;
-     display: inline-block;
-     z-index: 200;
-     position: relative;
- }
 
     .calendar_header {
         border-bottom: 2px solid rgba(0, 0, 0, 0.08);
@@ -435,11 +550,11 @@
 
     .ce_title {
         font-size: 14px;
+        margin-bottom: 2px;
     }
 
     .event_item {
-        margin: 6px 0;
-        padding: 4px;
+        padding: 2px;
         cursor: pointer;
     }
 
@@ -470,7 +585,12 @@
         box-shadow: 0px 0px 52px -18px rgba(0, 0, 0, 0.75);
     }
 
+    .ei_Delete:hover {
+        color: #4786ff;
+    }
+
     .dot_active {
+        text-decoration: underline;
         background-color: #FF8494;
     }
 
@@ -482,5 +602,14 @@
     .ei_Copy {
         font-size: 12px;
         margin-left: 27px;
+    }
+
+    .popup-input {
+        border: 1px solid #ced4da;
+        border-radius: .25rem;
+    }
+
+    .popup-option {
+        background-color: #ffffff;
     }
 </style>
