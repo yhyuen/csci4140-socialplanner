@@ -79,8 +79,8 @@
 <script> var json = DATAJSON </script>
 
 <body>
-    <div id="app" @click="clearScreen()">
-        <navbar :status="status"></navbar>
+    <div id="app" @click="clearScreen()" >
+        <navbar :status="status" ></navbar>
         <main role="main" class="container mt-5">
             <div class="row">
                 <div class="people-container mt-md-5 col-sm-12 col-md-6 mx-auto">
@@ -91,7 +91,7 @@
                         <div class="scroll-box">
                             <div class="friends-list">
                                 <div class="friends-list-item media text-muted pt-1" v-for="friend in friends"
-                                    :key="friend.id">
+                                    :key="friend.id" >
                                     <div class="friend-img bd-placeholder-img mr-2 rounded">
                                         <img src="/public_html/img/default-profile-pic.png" width="20" height="20"
                                             class="d-inline-block align-top" alt="">
@@ -101,8 +101,7 @@
                                         <strong class="text-gray-dark">{{friend.nickname}}</strong>
                                         <span>{{friend.firstName}}, {{friend.lastName}}</span>
                                         <span>Last Meeting Time: {{friend.lastMeetingTime}}</span>
-                                        <button v-if="!friend.picked" @click="addFriendToPriority(friend.id)"> >
-                                        </button>
+                                        <button v-if="!friend.picked" @click="moveFriendToPriority(friend.id)" > > </button>
                                     </div>
                                 </div>
                             </div>
@@ -110,9 +109,9 @@
                         <small class="d-block text-right mt-3">
                             <div>
                                 <div class="popup bg-white rounded shadow col-6 text-left" v-if="focus.item.searchBox"
-                                    data-container="body" @click="stopClearing()">
+                                    data-container="body" @click="stopClearing()" >
                                     <div class="friends-list-item media text-muted pt-1"
-                                        v-for="people in people.suggestion" :key="people.id">
+                                        v-for="people in people.suggestion" :key="people.id" >
                                         <div class="friend-img bd-placeholder-img mr-2 rounded">
                                             <img src="/public_html/img/default-profile-pic.png" width="20" height="20"
                                                 class="d-inline-block align-top" alt="">
@@ -121,20 +120,20 @@
                                             class="friend-info media-body pb-1 mb-0 small lh-125 border-bottom border-gray">
                                             <strong class="text-gray-dark">{{people.nickname}}</strong>
                                             <span>{{people.firstName}}, {{people.lastName}}</span>
-                                            <button @click="addFriend(people.id)" > + </button>
+                                            <button @click="addPeopleToFriend(people.id)" > + </button>
                                         </div>
                                     </div>
                                     <input placeholder="Phone, Nickname, Name" v-model="people.search"
                                         class="search-bar mt-2" @change="searchPeople(people.search)" >
                                 </div>
                             </div>
-                            <a @click="openSearchBox()" >Add Friend</a>
+                            <button @click="openPeopleSearchBox()" >Add Friend</button>
                         </small>
                     </div>
                     <div class="groups-container my-3 p-3 bg-white rounded shadow">
 
                         <div class="group-info-pop-up p-3 bg-white rounded shadow col-10 mx-auto"
-                            v-if="focus.item.groupInfoBox" @click="stopClearing()">
+                            v-if="focus.item.groupInfoBox" @click="stopClearing()" >
                             <div class="groups-header">
                                 <h6 class="border-bottom border-gray pb-1 mb-0">{{focus.group.groupname}}<br>
                                     <small class="text-muted">Created on: {{focus.group.createDate}}, Last Meeting Date:
@@ -145,7 +144,7 @@
                                 <div class="small-scroll-box">
                                     <div class="gfriends-list">
                                         <div class="gfriends-list-item media text-muted pt-1"
-                                            v-for="friend in focus.group.grouplist">
+                                            v-for="friend in focus.group.groupList">
                                             <div class="friend-img bd-placeholder-img mr-2 rounded">
                                                 <img src="/public_html/img/default-group-pic.png" width="20" height="20"
                                                     class="d-inline-block align-top" alt="">
@@ -160,11 +159,12 @@
                                 </div>
                             </div>
                             <small class="d-block text-right mt-3">
-                                <div>
+                                <div> 
+                                    <!-- Group Add Friend Friends -->
                                     <div class="popup bg-white rounded shadow col-6 text-left"
-                                        v-if="focus.item.searchBoxGroup" data-container="body" @click="stopClearing()">
+                                        v-if="focus.item.searchBoxGroup" data-container="body" @click="stopClearing()" >
                                         <div class="friends-list-item media text-muted pt-1"
-                                            v-for="people in people.suggestion" :key="people.id">
+                                            v-for="people in people.suggestion" :key="people.id" >
                                             <div class="friend-img bd-placeholder-img mr-2 rounded">
                                                 <img src="/public_html/img/default-profile-pic.png" width="20" height="20"
                                                     class="d-inline-block align-top" alt="">
@@ -173,19 +173,20 @@
                                                 class="friend-info media-body pb-1 mb-0 small lh-125 border-bottom border-gray">
                                                 <strong class="text-gray-dark">{{people.nickname}}</strong>
                                                 <span>{{people.firstName}}, {{people.lastName}}</span>
-                                                <button @click="addFriend(people.id)"> + </button>
+                                                <button @click="addFriendToGroup(people.id)" > + </button>
                                             </div>
                                         </div>
-                                        <input placeholder="Phone Number" v-model="people.search"
-                                            class="search-bar mt-2" @change="searchPeople(people.search)">
+                                        <input placeholder="Friends' Number/Nickname" v-model="people.search"
+                                            class="search-bar mt-2" @change="searchFriends(people.search)" >
                                     </div>
                                 </div>
-                                <a @click="openSearchBoxGroup()">Add Friend</a>
+                                <button @click="openGroupSearchBoxGroup()" >Add Friend</button>
+                                <button @click="submitChangeGroup()" >Submit</button>
                             </small>
                         </div>
 
                         <div class="group-info-pop-up p-3 bg-white rounded shadow col-10 mx-auto"
-                            v-if="focus.item.createGroupBox" @click="stopClearing()">
+                            v-if="focus.item.createGroupBox" @click="stopClearing()" >
                             <div class="groups-header">
                                 <h6 class="border-bottom border-gray pb-1 mb-0">Group Name: <input v-model="focus.group.groupname"></h6>
                             </div>
@@ -193,7 +194,7 @@
                                 <div class="small-scroll-box">
                                     <div class="gfriends-list">
                                         <div class="gfriends-list-item media text-muted pt-1"
-                                            v-for="friend in focus.group.grouplist">
+                                            v-for="friend in focus.group.groupList">
                                             <div class="friend-img bd-placeholder-img mr-2 rounded">
                                                 <img src="/public_html/img/default-group-pic.png" width="20" height="20"
                                                     class="d-inline-block align-top" alt="">
@@ -208,27 +209,24 @@
                                 </div>
                             </div>
                             <small class="d-block text-right mt-3">
-                                <div>
-                                    <div class="popup bg-white rounded shadow col-6 text-left"
-                                        v-if="focus.item.searchBoxGroup" data-container="body" @click="stopClearing()">
-                                        <div class="friends-list-item media text-muted pt-1"
-                                            v-for="people in people.suggestion" :key="people.id">
+                                <div class="create-group-box-search-box"> 
+                                    <div class="popup bg-white rounded shadow col-6 text-left" v-if="focus.item.searchBoxGroup" data-container="body" @click="stopClearing()" >
+                                        <div class="friends-list-item media text-muted pt-1" v-for="friend in focus.friends" :key="friend.id" >
                                             <div class="friend-img bd-placeholder-img mr-2 rounded">
                                                 <img src="/public_html/img/default-profile-pic.png" width="20" height="20"
                                                     class="d-inline-block align-top" alt="">
                                             </div>
-                                            <div
-                                                class="friend-info media-body pb-1 mb-0 small lh-125 border-bottom border-gray">
-                                                <strong class="text-gray-dark">{{people.nickname}}</strong>
-                                                <span>{{people.firstName}}, {{people.lastName}}</span>
-                                                <button @click="addFriend(people.id)"> + </button>
+                                            <div class="friend-info media-body pb-1 mb-0 small lh-125 border-bottom border-gray">
+                                                <strong class="text-gray-dark">{{friend.nickname}}</strong>
+                                                <span>{{friend.firstName}}, {{friend.lastName}}</span>
+                                                <button @click="addFriendToGroup(friend.id)" > + </button>
                                             </div>
                                         </div>
-                                        <input placeholder="Phone Number" v-model="people.search"
-                                            class="search-bar mt-2" @change="searchPeople(people.search)" >
+                                        <input placeholder="Phone/Name" v-model="people.search"
+                                            class="search-bar mt-2" @change="searchFriends(people.search)" >
                                     </div>
                                 </div>
-                                <a @click="openSearchBoxGroup()" >Add Friend</a> <a @click="" >Submit</a>
+                                <button @click="openGroupSearchBox()" >Add Friend</button> <button @click="submitNewGroup()" >Submit</button>
                             </small>
                         </div>
                         <div class="groups-header">
@@ -237,7 +235,7 @@
                         <div class="groups-list">
                             <div class="scroll-box">
                                 <div class="groups-list-item media text-muted pt-1" v-for="group in groups"
-                                    :key="group.id">
+                                    :key="group.id" >
                                     <div class="group-img bd-placeholder-img mr-2 rounded">
                                         <img src="/public_html/img/default-group-pic.png" width="20" height="20"
                                             class="d-inline-block align-top" alt="">
@@ -245,14 +243,14 @@
                                     <div class="group-info media-body pb-1 mb-0 small lh-125 border-bottom border-gray">
                                         <strong class="text-gray-dark">{{group.groupname}}</strong>
                                         <span>Last Meeting Time: {{group.lastMeetingTime}}</span>
-                                        <button @click="showGroupInfo(group.id)"> i </button>
-                                        <button v-if="!group.picked" @click="addGroupToPriority(group.id)"> > </button>
+                                        <button @click="showGroupInfo(group.id)" > i </button>
+                                        <button v-if="!group.picked" @click="moveGroupToPriority(group.id)" > > </button>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         
-                        <small class="d-block text-right mt-3"><a href="#">Create Group</a> </small>
+                        <small class="d-block text-right mt-3"><button @click="openGroupCreateBox()" >Create Group</button> </small>
                     </div>
                 </div>
 
@@ -262,7 +260,7 @@
                             <h6 class="border-bottom border-gray pb-1 mb-0">Who you like to meet?</h6>
                         </div>
                         <div class="priorities-list">
-                            <div class="priorities-list-item" v-for="priority in priorities" :key="priority.id">
+                            <div class="priorities-list-item" v-for="priority in priorities" :key="priority.id" >
                                 <div class="friends-list-item  media text-muted pt-1" v-if="priority.nickname">
                                     <div class="friend-img group-img  bd-placeholder-img mr-2 rounded">
                                         <img src="/public_html/img/default-profile-pic.png" width="20" height="20"
@@ -273,10 +271,10 @@
                                         <strong class="text-gray-dark">{{priority.nickname}} </strong>
                                         <span>{{priority.firstName}} {{priority.lastName}}</span>
                                         <span>Last Meeting Time: {{priority.lastMeetingTime}}</span>
-                                        <button @click="removePriority(priority.id)"> x </button>
-                                        <button @click="moveUpPriority(priority.id)"> ^ </button>
-                                        <button @click="moveDownPriority(priority.id)"> v </button>
-                                        <button @click="moveTopPriority(priority.id)"> T </button>
+                                        <button @click="removeFromPriority(priority.id)" > x </button>
+                                        <button @click="moveUpPriority(priority.id)" > ^ </button>
+                                        <button @click="moveDownPriority(priority.id)" > v </button>
+                                        <button @click="moveTopPriority(priority.id)" > T </button>
                                     </div>
                                 </div>
                                 <div class="groups-list-item media text-muted pt-1" v-if="priority.groupname">
@@ -287,15 +285,16 @@
                                     <div class="group-info media-body pb-1 mb-0 small lh-125 border-bottom border-gray">
                                         <strong class="text-gray-dark">{{priority.groupname}} </strong>
                                         <span>Last Meeting Time: {{priority.lastMeetingTime}}</span>
-                                        <button @click="removePriority(priority.id)"> x </button>
-                                        <button @click="moveUpPriority(priority.id)"> ^ </button>
-                                        <button @click="moveDownPriority(priority.id)"> v </button>
-                                        <button @click="moveTopPriority(priority.id)"> T </button>
+                                        <button @click="removeFromPriority(priority.id)" > x </button>
+                                        <button @click="moveUpPriority(priority.id)" > ^ </button>
+                                        <button @click="moveDownPriority(priority.id)" > v </button>
+                                        <button @click="moveTopPriority(priority.id)" > T </button>
                                     </div>
-
                                 </div>
                             </div>
+                            
                         </div>
+                        <small class="d-block text-right mt-3"><button @click="submitPriorities()" >Submit</button> </small>
                     </div>
                 </div>
             </div>

@@ -276,6 +276,7 @@
                     axios.post('/getMonthEventRequest', { month: this.focusMonth })
                         .then(function (response) {
                             _this.eventList = response.data.eventList;
+                            console.log(_this.eventList);
                             for (var i = 0; i < _this.eventList.length; i++) {
                                 _this.eventList[i].startTime = new Date(_this.eventList[i].startTime);
                                 _this.eventList[i].endTime = new Date(_this.eventList[i].endTime);

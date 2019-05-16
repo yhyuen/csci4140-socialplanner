@@ -128,7 +128,15 @@ router.get('/logoutRequest', function(req, res){
 });
 
 router.post('/searchPeopleRequest', function(req, res){
-    database.searchPeopleRequest(req.body.key, function(response){
+    var data = {cookie: req.cookies['connect.sid'], key: req.body.key};
+    database.searchPeopleRequest(data, function(response){
+        res.send(response);
+    });
+});
+
+router.post('/searchFriendsRequest', function(req, res){
+    var data = {cookie: req.cookies['connect.sid'], key: req.body.key};
+    database.searchFriendsRequest(data, function(response){
         res.send(response);
     });
 });
@@ -137,6 +145,30 @@ router.post('/addPeopleRequest', function(req, res){
     var data = req.body;
     data.cookie = req.cookies['connect.sid'];
     database.addPeopleRequest(data, function(response){
+        res.send(response);
+    });
+});
+
+router.post('/submitNewGroup', function(req, res){
+    var data = req.body;
+    data.cookie = req.cookies['connect.sid'];
+    database.submitNewGroup(data, function(response){
+        res.send(response);
+    });
+});
+
+router.post('/submitChangeGroup', function(req, res){
+    var data = req.body;
+    data.cookie = req.cookies['connect.sid'];
+    database.submitChangeGroup(data, function(response){
+        res.send(response);
+    });
+});
+
+router.post('/submitPriorities', function(req, res){
+    var data = req.body;
+    data.cookie = req.cookies['connect.sid'];
+    database.submitPriorities(data, function(response){
         res.send(response);
     });
 });

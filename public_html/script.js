@@ -72,7 +72,7 @@ window.addEventListener('load', function () {
                         type: "group",
                         proposer: { id: 0, nickname: "Ben Yuen", firstName: "Yat Hang", lastName: "Yuen" },
                         taker: {
-                            id: -1, groupname: "High School Friends", createDate: null, lastMeetingTime: null, grouplist: [
+                            id: -1, groupname: "High School Friends", createDate: null, lastMeetingTime: null, groupList: [
                                 { nickname: "Sosad", firstName: "Kwok Hang", lastName: "Lau" },
                                 { nickname: "Ben Yuen", firstName: "Yat Hang", lastName: "Yuen" },
                             ]
@@ -119,17 +119,17 @@ window.addEventListener('load', function () {
             ],
             groups: [
                 {
-                    id: -1, groupname: "Big O", createDate: null, lastMeetingTime: null, picked: false, grouplist: [
+                    id: -1, groupname: "Big O", createDate: null, lastMeetingTime: null, picked: false, groupList: [
                         { id: 1, nickname: "Richard", firstName: "Siu Ming", lastName: "Chan", lastMeetingTime: null, picked: false },
                         { id: 1, nickname: "Harold", firstName: "Siu Ming", lastName: "Chan", lastMeetingTime: null, picked: false },
                         { id: 1, nickname: "Tim", firstName: "Siu Ming", lastName: "Chan", lastMeetingTime: null, picked: false },
                         { id: 1, nickname: "Katie", firstName: "Siu Ming", lastName: "Chan", lastMeetingTime: null, picked: false },
                     ]
                 },
-                {id: -2, groupname: "Primary Schoolmates", createDate: null, lastMeetingTime: null, picked: false, grouplist: []},
-                {id: -3, groupname: "High School Friends", createDate: null, lastMeetingTime: null, picked: false, grouplist: []},
-                {id: -4, groupname: "6C", createDate: null, lastMeetingTime: null, picked: false, grouplist: []},
-                {id: -5, groupname: "莊員", createDate: null, lastMeetingTime: null, picked: false, grouplist: []},
+                { id: -2, groupname: "Primary Schoolmates", createDate: null, lastMeetingTime: null, picked: false, groupList: [] },
+                { id: -3, groupname: "High School Friends", createDate: null, lastMeetingTime: null, picked: false, groupList: [] },
+                { id: -4, groupname: "6C", createDate: null, lastMeetingTime: null, picked: false, groupList: [] },
+                { id: -5, groupname: "莊員", createDate: null, lastMeetingTime: null, picked: false, groupList: [] },
             ],
             priorities: [
 
@@ -143,20 +143,21 @@ window.addEventListener('load', function () {
                 item: {
                     searchBox: false,
                     searchBoxGroup: false,
-                    createGroupBox: true,
+                    createGroupBox: false,
                     groupInfoBox: false,
                     priorityInfoBox: false,
                 },
                 people: {},
+                friends: [],
                 friend: { id: null, nickname: null, firstName: null, lastName: null, lastMeetingTime: null, picked: null },
-                group: { id: null, groupname: null, createDate: null, lastMeetingTime: null, picked: null, grouplist: [] },
+                group: { id: null, groupname: null, createDate: null, lastMeetingTime: null, picked: null, groupList: [] },
                 date: null,
                 event: {
                     id: 1,
                     type: "group",
                     proposer: { id: 0, nickname: "Ben Yuen", firstName: "Yat Hang", lastName: "Yuen" },
                     taker: {
-                        id: -1, groupname: "High School Friends", createDate: null, lastMeetingTime: null, grouplist: [
+                        id: -1, groupname: "High School Friends", createDate: null, lastMeetingTime: null, groupList: [
                             { nickname: "Sosad", firstName: "Kwok Hang", lastName: "Lau" },
                             { nickname: "Ben Yuen", firstName: "Yat Hang", lastName: "Yuen" },
                         ]
@@ -184,14 +185,14 @@ window.addEventListener('load', function () {
             },
             characteristics: {
                 type: {
-                    meal :{
+                    meal: {
                         lunch: {
 
                         },
                         tea: {
 
                         },
-                        dinner :{
+                        dinner: {
 
                         },
                     },
@@ -202,27 +203,43 @@ window.addEventListener('load', function () {
             }
         },
         mounted() {
-            if(json != null && json != undefined){
+            if (json != null && json != undefined) {
                 this.status = json.status;
-                //this.friends = json.friends;
+                this.friends = json.friends;
+                this.groups = json.groups;
+                this.events = json.events;
+                this.priorities = json.priorities;
             }
         },
         methods: {
-            regNext() {
-                if (this.register.tab < this.register.maxTab) this.register.tab++;
-            },
-            regPrev() {
-                if (this.register.tab > 0) this.register.tab--;
-            },
-            characteristicsToString(characteristics) {
-                if(characteristics.hasOwnProperty('weight')){
-                    
+            //General
+            clearScreen: function () {
+                console.log("Clear");
+                if (this.focus.opening) {
+                    this.focus.opening = false;
                 }
                 else {
-
+                    var keys = Object.keys(this.focus.item);
+                    for (var i = 0; i < keys.length; i++) {
+                        this.focus.item[keys[i]] = false;
+                    }
                 }
             },
-            addFriendToPriority(id) {
+            stopClearing: function () {
+                this.focus.opening = true;
+            },
+            logoutRequest: function () {
+                axios.get('/logoutRequest')
+                    .then(function (response) {
+                        if (response.data.success) {
+                            alert("Successfully Logout-ed");
+                        }
+                        else alert("Logout Failed due to Unknown Reason");
+                    });
+            },
+            //Friends
+            //Friends->Friends
+            moveFriendToPriority(id) {
                 for (var i = 0; i < this.friends.length; i++) {
                     if (this.friends[i].id == id) {
                         this.friends[i].picked = true;
@@ -231,7 +248,35 @@ window.addEventListener('load', function () {
                     }
                 }
             },
-            addGroupToPriority(id) {
+            openPeopleSearchBox() {
+                console.log("Open Search");
+                this.focus.item.searchBox = true;
+                this.focus.opening = true;
+            },
+            searchPeople(key) {
+                var _this = this;
+                axios.post('/searchPeopleRequest', { key: key })
+                    .then(function (response) {
+                        console.log(response.data);
+                        _this.people.suggestion = response.data;
+                    });
+            },
+            addPeopleToFriend(id) {
+                var _this = this;
+                axios.post('/addPeopleRequest', { id: id })
+                    .then(function (response) {
+                        if (response.data.success) {
+                            alert('Successfully Added');
+                            var newFriend = response.data.friend;
+                            _this.friends.push({id: newFriend.id, nickname: newFriend.nickname, firstName: newFriend.firstName, lastName: newFriend.lastName, lastMeetingTime: null, picked: null});
+                        }
+                        else if (!response.data.userExist)
+                            alert("User doesn't exist");
+                        else alert("Failed due to unknown error");
+                    });
+            },
+            //Friends->Groups
+            moveGroupToPriority(id) {
                 for (var i = 0; i < this.groups.length; i++) {
                     if (this.groups[i].id == id) {
                         this.groups[i].picked = true;
@@ -240,7 +285,68 @@ window.addEventListener('load', function () {
                     }
                 }
             },
-            removePriority(id) {
+            showGroupInfo(id) {
+                for (var i = 0; i < this.groups.length; i++) {
+                    if (id == this.groups[i].id) {
+                        this.focus.group = this.groups[i];
+                    }
+                }
+                this.focus.item.groupInfoBox = true;
+                this.focus.opening = true;
+            },
+            searchFriends(key) {
+                var _this = this;
+                axios.post('/searchFriendsRequest', { key: key })
+                    .then(function (response) {
+                        console.log(response.data);
+                        _this.focus.friends = response.data;
+                    });
+
+            },
+            addFriendToGroup(id){
+                console.log(id);
+                var duplicateFlag = false;
+                for (var i = 0; i < this.focus.group.groupList.length; i++) {
+                    var friend = this.focus.group.groupList[i];
+                    if(friend.id == id){
+                        duplicateFlag = true; break;
+                    }
+                }
+                if(duplicateFlag) alert('Friend already in Group');
+                else{
+                    for(var i = 0; i < this.friends.length; i++){
+                        var friend = this.friends[i];
+                        if(friend.id == id){
+                            this.focus.group.groupList.push({id: friend.id, nickname: friend.nickname, firstName: friend.firstName, lastName: friend.lastName});
+                            break;
+                        }
+                    }
+                }
+            },
+            openGroupSearchBox() {
+                console.log("Open Search Group");
+                this.focus.item.searchBoxGroup = true;
+                this.focus.opening = true;
+            },
+            openGroupCreateBox() {
+                this.focus.group = { id: null, groupname: null, createDate: null, lastMeetingTime: null, picked: null, groupList: [] };
+                this.focus.item.createGroupBox = true;
+                this.focus.opening = true;
+            },
+            submitNewGroup(){
+                var _this = this;
+                console.log("Submitting a new Group");
+                axios.post('/submitNewGroup', _this.focus.group)
+                    .then(function(response){
+                        console.log(response);
+                        window.location.href = "friends.html";
+                    });
+            },
+            submitChangeGroup(){
+
+            },
+            //Friends->priorities
+            removeFromPriority(id) {
                 this.priorities = this.priorities.filter(function (value, index, arr) {
                     if (value.id == id) {
                         if (value.nickname)
@@ -297,96 +403,48 @@ window.addEventListener('load', function () {
                     }
                 }
             },
-            clearScreen() {
-                console.log("Clear");
-                if (this.focus.opening) {
-                    this.focus.opening = false;
-                }
-                else {
-                    var keys = Object.keys(this.focus.item);
-                    for (var i = 0; i < keys.length; i++) {
-                        this.focus.item[keys[i]] = false;
-                    }
-                }
-            },
-            stopClearing() {
-                this.focus.opening = true;
-            },
-            openSearchBox() {
-                console.log("Open Search");
-                this.focus.item.searchBox = true;
-                this.focus.opening = true;
-            },
-            openSearchBoxGroup() {
-                console.log("Open Search Group");
-                this.focus.item.searchBoxGroup = true;
-                this.focus.opening = true;
-            },
-            showGroupInfo(id) {
-                for (var i = 0; i < this.groups.length; i++) {
-                    if (id == this.groups[i].id) {
-                        this.focus.group = this.groups[i];
-                    }
-                }
-                this.focus.item.groupInfoBox = true;
-                this.focus.opening = true;
-            },
-            loginRequest(loginInfo){
-                axios.post('/loginRequest', loginInfo)
+            submitPriorities(){
+                var _this = this;
+                axios.post('/submitPriorities', _this.priorities)
                     .then(function(response){
+                        console.log(response);
                         if(response.data.success){
+                            alert("Successfully Submitted Priorities!");
+                        }
+                        else {
+                            alert("Failed to Submit Due to unknown Reason");
+                        }
+                    });
+
+            },
+            //login
+            loginRequest(loginInfo) {
+                axios.post('/loginRequest', loginInfo)
+                    .then(function (response) {
+                        if (response.data.success) {
                             alert("Successfully Logged in");
                             window.location.href = "index.html";
                         }
                         else alert("Invalid Email or Password");
                     });
             },
-            registerRequest(registerInfo){
+            //register
+            registerRequest(registerInfo) {
                 console.log(registerInfo);
-                if(registerInfo.password != registerInfo.rePassword) alert("Passwords don't match");
+                if (registerInfo.password != registerInfo.rePassword) alert("Passwords don't match");
                 else axios.post('/registerRequest', registerInfo)
-                    .then(function(response){
-                        if(response.data.success){
+                    .then(function (response) {
+                        if (response.data.success) {
                             alert("Successfully Registered");
                             window.location.href = "login.html";
-                        }else{
-                            if(response.data.emailExist){
+                        } else {
+                            if (response.data.emailExist) {
                                 alert("Email Already Exist");
                             }
                             else alert("Register Failed due to Unknown Reason");
                         }
                     });
             },
-            logoutRequest(){
-                axios.get('/logoutRequest')
-                    .then(function(response){
-                        if(response.data.success){
-                            alert("Successfully Logout-ed");
-                        }
-                        else alert("Logout Failed due to Unknown Reason");
-                    });
-            },
-            addFriend(id){
-                var _this = this;
-                axios.post('/addPeopleRequest', {id: id})
-                    .then(function(response){
-                        if(response.data.success){
-                            alert('Successfully Added');
-                            window.location.href = "friends.html";
-                        }
-                        else if(!response.data.userExist)
-                            alert("User doesn't exist");
-                        else alert("Failed due to unknown error");
-                    });
-            },
-            searchPeople(key){
-                var _this = this;
-                axios.post('/searchPeopleRequest', {key: key})
-                    .then(function(response){
-                        console.log(response.data);
-                        _this.people.suggestion = response.data;
-                    });
-            }
         }
     });
 });
@@ -429,10 +487,10 @@ Vue.component('navbar', {
         </div>
     </nav>`,
     methods: {
-        logoutRequest(){
+        logoutRequest() {
             axios.get('/logoutRequest')
-                .then(function(response){
-                    if(response.data.success){
+                .then(function (response) {
+                    if (response.data.success) {
                         alert("Successfully Logout-ed");
                         window.location.href = "index.html"
                     }

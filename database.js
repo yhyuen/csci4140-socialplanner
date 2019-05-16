@@ -28,6 +28,22 @@ var database = {
             });
         });
     },
+    getUser: function(id, callback){
+        database.connectDatabase(function (db){
+            var user = db.db(databaseName).collection('user');
+            user.findOne({id: id},function(err, result){
+                callback(result);
+            });
+        });
+    }
+    ,getAllUser: function(callback){
+        database.connectDatabase(function (db){
+            var user = db.db(databaseName).collection('user');
+            user.find({}).toArray(function(err, result){
+                callback(result);
+            });
+        });
+    },
     loginRequest: function (data, callback) {
         this.connectDatabase(function (db) {
             var user = db.db(databaseName).collection('user');
@@ -74,18 +90,52 @@ var database = {
             });
         });
     },
-    searchPeopleRequest(key, callback) {
+    searchPeopleRequest(data, callback) {
         this.connectDatabase(function (db) {
             var user = db.db(databaseName).collection('user');
-            user.find({ phone: key }).toArray(function (err, result) {
-                var people = [];
-                for (var i = 0; i < result.length; i++) {
-                    var item = result[i];
-                    console.log(item);
-                    people.push({ id: item.id, firstName: item.firstName, lastName: item.lastName, nickname: item.nickname, phone: item.phone });
-                }
-                callback(people);
-                db.close();
+            var session = db.db(databaseName).collection('session');
+            session.findOne({ cookie: data.cookie }, function (err, sessionResult) {
+                user.findOne({ id: sessionResult.id }, function (err, currentUser) {
+                    if (currentUser == null) {
+                        callback([]);
+                        db.close();
+                    }
+                    else user.find({ phone: data.key }).toArray(function (err, result) {
+                        var people = [];
+                        for (var i = 0; i < result.length; i++) {
+                            var item = result[i];
+                            var duplicateFlag = false;
+                            for (var j = 0; j < currentUser.friends.length; j++) {
+                                if (currentUser.friends[j].id == item.id) {
+                                    duplicateFlag = true; break;
+                                }
+                            }
+                            if (!duplicateFlag) people.push({ id: item.id, firstName: item.firstName, lastName: item.lastName, nickname: item.nickname, phone: item.phone });
+                        }
+                        callback(people);
+                        db.close();
+                    });
+                })
+            });
+
+        });
+    },
+    searchFriendsRequest(data, callback) {
+        this.connectDatabase(function (db) {
+            var user = db.db(databaseName).collection('user');
+            var session = db.db(databaseName).collection('session');
+            session.findOne({ cookie: data.cookie }, function (err, sessionResult) {
+                user.findOne({ id: sessionResult.id }, function (err, currentUser) {
+                    var response = [];
+                    for (var i = 0; i < currentUser.friends.length; i++) {
+                        var friend = currentUser.friends[i];
+                        if (friend.nickname == data.key || friend.firstName == data.key || friend.lastName == data.key || friend.phone == data.key) {
+                            response.push(friend);
+                        }
+                    }
+                    callback(response);
+                    db.close();
+                });
             });
         });
     },
@@ -93,29 +143,121 @@ var database = {
         this.connectDatabase(function (db) {
             var user = db.db(databaseName).collection('user');
             var session = db.db(databaseName).collection('session');
-            session.findOne({ cookie: data.cookie }, function (err, currentUser) {
-                if (currentUser == null) { callback({ success: false, login: false }); db.close(); }
-                user.findOne({ id: data.id }, function (err, toAddUser) {
-                    console.log('to Add user:');
-                    console.log(toAddUser);
-                    console.log('current user:');
-                    console.log(currentUser);
-                    if (toAddUser == null) {
-                        callback({ success: false, userExist: false });
-                        db.close();
-                    }
-                    else {
-                        user.findOneAndUpdate({ id: currentUser.id }, { $push: { friends: { id: toAddUser.id, nickname: toAddUser.nickname, firstName: toAddUser.firstName, lastName: toAddUser.lastName, phone: toAddUser.phone, lastMeetTime: null, picked: false } } }, function (err, result) {
-                            if (result.ok == 1) callback({ success: true, userExist: true });
-                            else callback({ success: false, userExist: true });
+            session.findOne({ cookie: data.cookie }, function (err, sessionResult) {
+                user.findOne({ id: sessionResult.id }, function (err, currentUser) {
+                    if (currentUser == null) { callback({ success: false, login: false }); db.close(); }
+                    user.findOne({ id: data.id }, function (err, toAddUser) {
+                        if (toAddUser == null) {
+                            callback({ success: false, userExist: false, alreadyAdded: true });
                             db.close();
-                        });
-                    }
+                        }
+                        else {
+                            var duplicateFlag = false;
+                            console.log(currentUser);
+                            for (var i = 0; i < currentUser.friends.length; i++) {
+                                if (currentUser.friends[i].id == toAddUser.id) {
+                                    duplicateFlag = true; break;
+                                }
+                            }
+                            if (duplicateFlag) {
+                                callback({ success: false, userExist: true, alreadyAdded: true });
+                                db.close();
+                            }
+                            else {
+                                user.findOneAndUpdate({ id: currentUser.id }, { $push: { friends: { id: toAddUser.id, nickname: toAddUser.nickname, firstName: toAddUser.firstName, lastName: toAddUser.lastName, phone: toAddUser.phone, lastMeetTime: null, picked: false } } }, function (err, result) {
+                                    if (result.ok == 1)
+                                        callback({ success: true, userExist: true, friend: toAddUser });
+                                    else callback({ success: false, userExist: true });
+                                    db.close();
+                                });
+                            }
+                        }
+                    });
+
                 });
             });
         });
     },
-    getUserEvent(cookie, callback) {
+    submitNewGroup(data, callback) {
+        this.connectDatabase(function (db) {
+            console.log(data);
+            var user = db.db(databaseName).collection('user');
+            var session = db.db(databaseName).collection('session');
+            var group = db.db(databaseName).collection('group');
+            session.findOne({ cookie: data.cookie }, function (err, sessionResult) {
+                if (sessionResult == null) { callback({ success: false, login: false }); db.close(); }
+                else {
+                    delete data.cookie;
+                    user.findOne({ id: sessionResult.id }, function (err, userResult) {
+                        if (userResult == null) { callback({ success: false, login: false }); db.close(); }
+                        else {
+                            var createExistFlag = false;
+                            for (var i = 0; i < data.groupList.length; i++) {
+                                var person = data.groupList[i];
+                                if (person.id == userResult.id) { createExistFlag = true; break; }
+                            }
+                            if (!createExistFlag) data.groupList.unshift({ id: userResult.id, nickname: userResult.nickname, firstName: userResult.firstName, lastName: userResult.lastName });
+                            data.id = uuid.v1();
+                            group.insertOne(data, function (err, result) {
+                                for (var i = 0; i < data.groupList.length; i++) {
+                                    var person = data.groupList[i];
+                                    user.findOneAndUpdate({ id: person.id }, { $push: { groups: data } });
+                                }
+                                callback({ success: true });
+                                db.close();
+                            });
+                        }
+                    });
+                }
+            });
+        });
+    },
+    submitChangeGroup(data, callback) {
+        this.connectDatabase(function (db) {
+            var user = db.db(databaseName).collection('user');
+            var session = db.db(databaseName).collection('session');
+            var group = db.db(databaseName).collection('group');
+            session.findOne({ cookie: data.cookie }, function (err, sessionResult) {
+
+                // if(sessionResult == null) {callback({success: false, login: false}); db.close();}
+                // else{
+                //     delete data.cookie;
+                //     user.findOne({id: sessionResult.id}, function(err, userResult){
+                //         if(userResult == null) {callback({success: false, login: false}); db.close();}
+                //         else{
+                //             group.findOneAndUpdate({id: data.id}, function(err, groupResult){
+                //                 for(var i = 0; i < groupResult.groupList.length; i++){
+                //                     var person = groupResult.groupList[i];
+                //                     user.findOneAndUpdate({id: person.id}, {$push: {groups: data}});
+                //                 }
+                //                 callback({success: true});
+                //                 db.close();
+                //             });
+                //         }
+                //     });
+                // }
+            });
+        });
+    },
+    submitPriorities(data, callback){
+        this.connectDatabase(function (db) {
+            var user = db.db(databaseName).collection('user');
+            var session = db.db(databaseName).collection('session');
+            session.findOne({ cookie: data.cookie }, function (err, sessionResult) {
+                if (sessionResult == null) {callback({success: false, login: false}); db.close();}
+                else{
+                    delete data.cookie;
+                    user.findOneAndUpdate({id: sessionResult.id}, {$set: {priorities: data}}, function(err, result){
+                        if (result.ok == 1) callback({ success: true, userExist: true });
+                        else callback({ success: false, userExist: true });
+                        db.close();
+                    });
+                }
+            });
+        });
+
+    }
+    , getUserEvent(cookie, callback) {
         this.connectDatabase(function (db) {
             var user = db.db(databaseName).collection('user');
             var session = db.db(databaseName).collection('session');
