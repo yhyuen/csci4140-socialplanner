@@ -21,9 +21,16 @@ var database = {
                     db.close();
                 }
                 else user.findOne({ id: sessionResult.id }, function (err, userResult) {
-                    userResult.status = { login: true };
-                    callback(userResult);
-                    db.close();
+                    if(userResult == null){
+                        callback({ status: { login: false } });
+                        db.close();
+                    }
+                    else{
+                        userResult.status = { login: true };
+                        if(userResult.registration && userResult.preferences != null) userResult.status.registration = true;
+                        callback(userResult);
+                        db.close();
+                    }
                 });
             });
         });
@@ -41,8 +48,47 @@ var database = {
             var user = db.db(databaseName).collection('user');
             user.find({}).toArray(function(err, result){
                 callback(result);
+                db.close();
             });
         });
+    },
+    getCharacteristic: function(callback){
+        database.connectDatabase(function(db){
+            var characteristic = db.db(databaseName).collection('characteristic');
+            characteristic.findOne({}, function(err, result){
+                callback(result);
+                db.close();
+            });
+        });
+    },
+    pushCharacteristic: function(data, callback){
+        database.connectDatabase(function(db){
+            var characteristic = db.db(databaseName).collection('characteristic');
+            var queue = [data];
+            while(queue.length > 0){
+                var item = queue.shift();
+                item.subCatagories.sort(function(a, b){
+                    if(a.popularity > b.popularity) return -1;
+                    else if(a.popularity < b.popularity) return 1;
+                    else if(a.recentPopularity > b.popularity) return -1;
+                    else if(a.recentPopularity < b.popularity) return 1;
+                    else return 0;
+                });
+                for(var i = 0; i < item.subCatagories.length; i++){
+                    var targetItem = item.subCatagories[i];
+                    queue.push(targetItem);
+                }
+            }
+            characteristic.deleteMany({}, function(err, result){
+                characteristic.insertOne(data, function(err, result){
+                    callback({success: true});
+                    db.close();
+                });
+            });
+        });
+    },
+    getAllActivities: function(callback){
+        callback(null);
     },
     loginRequest: function (data, callback) {
         this.connectDatabase(function (db) {
@@ -77,6 +123,23 @@ var database = {
                         db.close();
                     });
                 }
+            });
+        });
+    },
+    submitRegistration: function(data, cookie, callback){
+        this.connectDatabase(function(db){
+            var user = db.db(databaseName).collection('user');
+            var session = db.db(databaseName).collection('session');
+            session.findOne({cookie: cookie}, function(err, sessionResult){
+                if(sessionResult == null){
+                    callback({success: false, login: false});
+                    db.close();
+                }
+                else user.findOneAndUpdate({ id: sessionResult.id }, { $set: { preferences: data, registration: true } }, function (err, result) {
+                    if (result.ok == 1) callback({success: true});
+                    else callback({success: false});
+                    db.close();
+                });
             });
         });
     },

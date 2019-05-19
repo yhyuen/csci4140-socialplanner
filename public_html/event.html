@@ -16,6 +16,7 @@
         integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
         crossorigin="anonymous"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/less.js/3.9.0/less.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script src="./script.js"></script>
 </head>
 
@@ -46,6 +47,7 @@
                         <h6 class="tab-header border-bottom border-gray pb-2 mb-0">
                             Event to be Proposed:
                         </h6>
+                        <button @click="makeEvent()">Test Event Making!</button>>
                         <div class="tab-item media text-muted pt-3" v-for="event in events.suggested">
                             <div class="tab-item-header media-body pb-3 mb-0 small lh-125 border-bottom border-gray">
                                 <button class="tab-item-button btn-sm btn-info float-right ml-3" data-toggle="modal"

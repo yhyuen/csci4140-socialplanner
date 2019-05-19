@@ -181,26 +181,27 @@ window.addEventListener('load', function () {
                     //         }
                     //     }
                     // }
-                }
+                },
+                characteristics: {}
             },
-            characteristics: {
-                type: {
-                    meal: {
-                        lunch: {
-
-                        },
-                        tea: {
-
-                        },
-                        dinner: {
-
-                        },
-                    },
-                    activity: {
-
-                    }
+            characteristics: 
+                {name: "Characteristics", rating: null, rating: null, subCatagories:[
+                    {name: "Meal", rating: 73, subCatagories: [
+                        {name: "Breakfast", rating: 28, subCatagories:[]},
+                        {name: "Lunch", rating: 57, subCatagories: []},
+                        {name: "Dinner", rating: 87, subCatagories: []}
+                    ]},
+                    {name: "Activity", rating: 54, subCatagories: [
+                        {name: "Indoor", rating: 65, subCatagories: [
+                            {name: "Chess", rating: 34, subCatagories: []},
+                            {name: "Karaoke", rating: 85, subCatagories: []}
+                        ]},
+                        {name: "Outdoor", rating: 50, subCatagories: [
+                            {name: "Swimming", rating: 70, subCatagories: []},
+                            {name: "Biking", rating: 80, subCatagories: []}
+                        ]}
+                    ]}]
                 }
-            }
         },
         mounted() {
             if (json != null && json != undefined) {
@@ -208,7 +209,21 @@ window.addEventListener('load', function () {
                 this.friends = json.friends;
                 this.groups = json.groups;
                 this.events = json.events;
-                this.priorities = json.priorities;
+                this.priorities = json.priorities == null ? [] : json.priorities ;
+                if(!this.status.login && window.location.pathname != '/login.html' && window.location.pathname != 'register.html'){
+                    alert("You need to Login first!");
+                    window.location.href = "/login.html";
+                }
+                else{
+                        if(this.status.login && (json.registration == null || !json.registration) && window.location.pathname != '/registration.html'){
+                        alert("You need to first Complete your Registration!");
+                        window.location.href = "/registration.html";
+                    }
+                }
+            }
+            if(typeof charjson != 'undefined'){
+                this.characteristics = charjson;
+                this.focus.characteristics = this.processCharacteristic(this.characteristics);
             }
         },
         methods: {
@@ -445,6 +460,115 @@ window.addEventListener('load', function () {
                         }
                     });
             },
+            //registration
+            appendItem(item, suggestion){
+                if (suggestion.length > 15){
+                    alert("Please Keep the suggestion under 15 letters.");
+                }
+                else if(suggestion.length == 0){
+                    alert("Cannot be empty.");
+                }
+                else{
+                    suggestion = suggestion.charAt(0).toUpperCase() + suggestion.slice(1);
+                    var found = false;
+                    for(var i = 0; i < item.otherSubCatagories.length; i++){
+                        if(!found && suggestion == item.otherSubCatagories[i].name){
+                            item.subCatagories.push(item.otherSubCatagories[i]);
+                            found = true;
+                        }
+                        else if(found){
+                            item.otherSubCatagories[i - 1] = item.otherSubCatagories[i];
+                        }
+                    }
+                    if(found) item.otherSubCatagories.pop();
+                    if(!found) item.subCatagories.push({name: suggestion, rating: 50, subCatagories: [], focus: false, suggestion: null});
+                }
+            },
+            submitRegistration(characteristics){
+                console.log(characteristics);
+                axios.post('/submitRegistration', characteristics)
+                    .then(function(response){
+                        console.log(response);
+                        window.location.href = "calendar.html";
+                    });
+
+            },
+            processCharacteristic(data){
+                data.suggestList = [];
+                data.suggestion = null;
+                data.showList = false;
+                var queue = [data];
+                while(queue.length > 0){
+                    var item = queue.shift();
+                    var newSubCatagories = [];
+                    item.otherSubCatagories = [];
+                    var totalPopularity = 0;
+                    var currentPopularity = 0;
+
+                    var extraMaxRecentPopularity = 0;
+                    var extraIndex = null;
+                    for(var i = 0; i < item.subCatagories.length; i++){
+                        totalPopularity += item.subCatagories[i].popularity;
+                    }
+                    for(var i = 0; i < item.subCatagories.length; i++){
+                        if(currentPopularity > totalPopularity * 0.8 && item.subCatagories[i].recentPopularity > extraMaxRecentPopularity){
+
+                            extraMaxRecentPopularity = item.subCatagories[i].recentPopularity;
+                            extraIndex = i;
+                        }
+                        currentPopularity += item.subCatagories[i].popularity;
+                    } 
+                    currentPopularity = 0;
+                    for(var i = 0; i < item.subCatagories.length; i++){
+                        item.subCatagories[i].rating = 50;
+                        item.subCatagories[i].preferenced = false;
+                        item.subCatagories[i].focus = false;
+                        item.subCatagories[i].suggestList = [];
+                        item.subCatagories[i].suggestion = null;
+                        item.subCatagories[i].showList = false;
+                        queue.push(item.subCatagories[i]);
+                        if(currentPopularity <= totalPopularity * 0.8 || i == extraIndex){
+                            newSubCatagories.push(item.subCatagories[i]);
+                            currentPopularity += item.subCatagories[i].popularity;
+                        }
+                        else
+                            item.otherSubCatagories.push(item.subCatagories[i]);
+                    }
+                    item.subCatagories = newSubCatagories;
+                    console.log(item.name);
+                    console.log(item.otherSubCatagories);
+                    console.log(item);
+                }
+                return data;
+            },
+            autocomplete(otherSubCatagories, suggestion){
+                var insertList = [];
+                for(var i = 0; i < otherSubCatagories.length; i++){
+                    var item = otherSubCatagories[i];
+                    if(item.name.toLowerCase().includes(suggestion.toLowerCase())){
+                        insertList.push(item);
+                    }
+                }
+                return insertList;
+            },
+            closeAllList(data){
+                var queue = [data];
+                while(queue.length > 0){
+                    var item = queue.shift();
+                    for(var i = 0; i < item.subCatagories.length; i++){
+                        item.showList = false;
+                        queue.push(item.subCatagories[i]);
+                    }
+                }
+                this.$forceUpdate();
+            },
+            //event
+            makeEvent(){
+                axios.get('/makeEvent')
+                    .then(function(response){
+                        console.log(response);
+                    });
+            }
         }
     });
 });
@@ -500,3 +624,80 @@ Vue.component('navbar', {
     }
 });
 
+
+
+
+Vue.component('nodetree', {
+    props: {
+        item: { name: null, rating: 50, subCatagories: [], focus: false, suggestion: null, preferenced: false},
+    },
+    template: `
+    <div>
+        <div class="range-item-container">
+            <label class="lead">
+                <span @click="item.focus = true; item.preferenced = true; $forceUpdate();"
+                    v-if="item.focus == null || item.focus == false">▶ </span>
+                <span @click="item.focus = false; $forceUpdate();" v-if="item.focus">▼ </span>
+                {{item.name}}<span v-if="item.preferenced == null || !item.preferenced"> (No Preference)</span></label>
+            <div class="row mb-2">
+                <span class="col-1 lead small">Love</span>
+                <input class="col-10 mx-auto" type="range" v-model="item.rating" @mouseup="item.focus = true; item.preferenced = true; $forceUpdate();">
+                <span class="col-1 lead small">Hate</span>
+            </div>
+            <div class="sub-container ml-3" v-if="item.focus">
+                <div v-for="subItem in item.subCatagories">
+                    <nodetree :item="subItem"></nodetree>
+                </div>
+                <div class="form-group">
+                    <label class="lead small">Can't Find a good Descripter for {{item.name}}? Add one!</label>
+                    <div class="autocomplete">
+                        <input type="text"
+                            @input="item.suggestList = autocomplete(item.otherSubCatagories, item.suggestion); item.showList = true ; $forceUpdate();"
+                            v-model="item.suggestion">
+                        <div class="autocomplete-items" v-if="item.showList">
+                            <div v-for="target in item.suggestList" @click="item.suggestion = target.name; item.showList = false; $forceUpdate();">
+                                <span>{{target.name}}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-sm btn-secondary" @click="appendItem(item, item.suggestion); item.suggestion = null;">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>`,
+    methods: {
+        appendItem(item, suggestion){
+            if (suggestion.length > 15){
+                alert("Please Keep the suggestion under 15 letters.");
+            }
+            else if(suggestion.length == 0){
+                alert("Cannot be empty.");
+            }
+            else{
+                suggestion = suggestion.charAt(0).toUpperCase() + suggestion.slice(1);
+                var found = false;
+                for(var i = 0; i < item.otherSubCatagories.length; i++){
+                    if(!found && suggestion == item.otherSubCatagories[i].name){
+                        item.subCatagories.push(item.otherSubCatagories[i]);
+                        found = true;
+                    }
+                    else if(found){
+                        item.otherSubCatagories[i - 1] = item.otherSubCatagories[i];
+                    }
+                }
+                if(found) item.otherSubCatagories.pop();
+                if(!found) item.subCatagories.push({name: suggestion, rating: 50, subCatagories: [], focus: false, suggestion: null});
+            }
+        },
+        autocomplete(otherSubCatagories, suggestion){
+            var insertList = [];
+            for(var i = 0; i < otherSubCatagories.length; i++){
+                var item = otherSubCatagories[i];
+                if(item.name.toLowerCase().includes(suggestion.toLowerCase())){
+                    insertList.push(item);
+                }
+            }
+            return insertList;
+        },
+    }
+});

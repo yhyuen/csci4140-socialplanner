@@ -34,6 +34,7 @@ router.get('/script.js', function(req, res){
 router.get('/', function (req, res) {
     fs.readFile(__dirname + "/public_html/" + "index.html", function(err, html){
         database.generalQuery(req.cookies['connect.sid'], function(response){
+            console.log(response);
             var htmlPlusData = html.toString().replace("DATAJSON", JSON.stringify(response));
             res.send(htmlPlusData);
         });
@@ -72,7 +73,10 @@ router.get('/registration.html', function (req, res) {
     fs.readFile(__dirname + "/public_html/" + "registration.html", function(err, html){
         database.generalQuery(req.cookies['connect.sid'], function(response){
             var htmlPlusData = html.toString().replace("DATAJSON", JSON.stringify(response));
-            res.send(htmlPlusData);
+            database.getCharacteristic(function(response){
+                htmlPlusData = htmlPlusData.toString().replace("CHARACTERISTICJSON", JSON.stringify(response));
+                res.send(htmlPlusData);
+            });
         });
     });
 });
@@ -118,6 +122,14 @@ router.post('/registerRequest', function(req, res){
     database.registerRequest(data, function(response){
         res.send(response);
     });
+});
+
+router.post('/submitRegistration', function(req, res){
+    var rawData = req.body;
+    var cookie = req.cookies['connect.sid'];
+    util.processRegistration(rawData, cookie, function(response){
+        res.send(response);
+    })
 });
 
 router.get('/logoutRequest', function(req, res){
@@ -191,9 +203,15 @@ router.post('/getMonthEventRequest', function(req, res){
     var start = new Date(req.body.month);
     var end = new Date(start.getFullYear(), start.getMonth() + 1);
     var cookie = req.cookies['connect.sid'];
-    util.flattenEvent(cookie, start, end, function(response){
+    util.flattenEventWithCookie(cookie, start, end, function(response){
         console.log(response);
         res.send({eventList: response});
+    });
+});
+
+router.get('/makeEvent', function(req, res){
+    util.generateEvent(function(response){
+        res.send(response);
     });
 });
 
